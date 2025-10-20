@@ -5,29 +5,51 @@ Subject: Keep empty tabs between sessions
 Original License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
 License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
 ---
- .../chrome/browser/tabmodel/TabPersistentStore.java  | 12 ------------
- 1 file changed, 12 deletions(-)
+ .../browser/multiwindow/MultiWindowUtils.java     |  2 +-
+ .../browser/tabmodel/TabPersistentStore.java      | 15 ---------------
+ 2 files changed, 1 insertion(+), 16 deletions(-)
 
+diff --git a/chrome/android/java/src/org/chromium/chrome/browser/multiwindow/MultiWindowUtils.java b/chrome/android/java/src/org/chromium/chrome/browser/multiwindow/MultiWindowUtils.java
+--- a/chrome/android/java/src/org/chromium/chrome/browser/multiwindow/MultiWindowUtils.java
++++ b/chrome/android/java/src/org/chromium/chrome/browser/multiwindow/MultiWindowUtils.java
+@@ -1063,7 +1063,7 @@ public class MultiWindowUtils implements ActivityStateListener {
+         int totalCount = 0;
+         for (TabModel model : models) {
+             for (Tab tab : model) {
+-                if (!TabPersistentStore.shouldSkipTab(tab)) {
++                if ((true)) {
+                     totalCount++;
+                 }
+             }
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tabmodel/TabPersistentStore.java b/chrome/android/java/src/org/chromium/chrome/browser/tabmodel/TabPersistentStore.java
 --- a/chrome/android/java/src/org/chromium/chrome/browser/tabmodel/TabPersistentStore.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/tabmodel/TabPersistentStore.java
-@@ -718,18 +718,6 @@ public class TabPersistentStore {
-                     .getTabCreator(isIncognito)
-                     .createFrozenTab(tabState, tabToRestore.id, restoredIndex);
-         } else {
--            if (!mSkipSavingNonActiveNtps
--                    && UrlUtilities.isNtpUrl(tabToRestore.url)
--                    && !setAsActive
--                    && !tabToRestore.fromMerge) {
--                Log.i(TAG, "Skipping restore of non-selected NTP.");
--                RecordHistogram.recordEnumeratedHistogram(
--                        "Tabs.TabRestoreMethod",
--                        TabRestoreMethod.SKIPPED_NTP,
--                        TabRestoreMethod.NUM_ENTRIES);
--                return;
+@@ -2109,27 +2109,12 @@ public class TabPersistentStore {
+                 continue;
+             }
+ 
+-            if (index == activeIndex) {
+-                // If any non-active NTPs have been skipped, the serialized tab model index
+-                // needs to be adjusted.
+-                modelInfo.index = modelInfo.ids.size();
+-            } else if (shouldSkipTab(tab)) {
+-                continue;
 -            }
+             modelInfo.ids.add(tab.getId());
+             modelInfo.urls.add(tab.getUrl().getSpec());
+         }
+         return modelInfo;
+     }
+ 
+-    public static boolean shouldSkipTab(Tab tab) {
+-        boolean isNtp = tab.isNativePage() && UrlUtilities.isNtpUrl(tab.getUrl());
+-        if (!isNtp) return false;
 -
-             Log.w(TAG, "Failed to restore TabState; creating Tab with last known URL.");
-             Tab fallbackTab =
-                     mTabCreatorManager
+-        // Only skip NTP tabs that are not in a tab group.
+-        return tab.getTabGroupId() == null;
+-    }
+-
+     /**
+      * @return The shared pref APP_LAUNCH_LAST_KNOWN_ACTIVE_TAB_STATE. This is used when we need to
+      *     know the last known tab state before the active tab from the tab state is read.
 --

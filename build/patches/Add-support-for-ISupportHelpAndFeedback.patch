@@ -12,16 +12,16 @@ License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java
 --- a/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java
-@@ -88,6 +88,7 @@ import org.chromium.components.browser_ui.settings.CustomDividerFragment;
- import org.chromium.components.browser_ui.settings.FragmentSettingsLauncher;
- import org.chromium.components.browser_ui.settings.PaddedItemDecorationWithDivider;
- import org.chromium.components.browser_ui.settings.SettingsLauncher;
+@@ -56,6 +56,7 @@ import org.chromium.chrome.browser.ui.messages.snackbar.Snackbar;
+ import org.chromium.components.browser_ui.bottomsheet.BottomSheetController;
+ import org.chromium.components.browser_ui.bottomsheet.BottomSheetControllerFactory;
+ import org.chromium.components.browser_ui.bottomsheet.ManagedBottomSheetController;
 +import org.chromium.components.browser_ui.settings.SettingsUtils;
- import org.chromium.components.browser_ui.site_settings.BaseSiteSettingsFragment;
- import org.chromium.components.browser_ui.site_settings.SiteSettingsCategory;
- import org.chromium.components.browser_ui.util.TraceEventVectorDrawableCompat;
-@@ -460,8 +461,12 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
-             finish();
+ import org.chromium.components.browser_ui.modaldialog.AppModalPresenter;
+ import org.chromium.components.browser_ui.settings.EmbeddableSettingsPage;
+ import org.chromium.components.browser_ui.settings.SettingsFragment;
+@@ -485,8 +486,12 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
+             finishCurrentSettings(mainFragment);
              return true;
          } else if (item.getItemId() == R.id.menu_id_general_help) {
 -            HelpAndFeedbackLauncherImpl.getForProfile(mProfile)
@@ -38,13 +38,15 @@ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/settings/Settin
 diff --git a/components/browser_ui/settings/android/java/src/org/chromium/components/browser_ui/settings/SettingsUtils.java b/components/browser_ui/settings/android/java/src/org/chromium/components/browser_ui/settings/SettingsUtils.java
 --- a/components/browser_ui/settings/android/java/src/org/chromium/components/browser_ui/settings/SettingsUtils.java
 +++ b/components/browser_ui/settings/android/java/src/org/chromium/components/browser_ui/settings/SettingsUtils.java
-@@ -91,4 +91,8 @@ public class SettingsUtils {
-         ToolbarUtils.setOverflowMenuVisibility(toolbar, visibility);
-         return true;
-     }
-+
+@@ -28,6 +28,10 @@ import org.chromium.ui.drawable.StateListDrawableBuilder;
+ /** A helper class for Settings. */
+ @NullMarked
+ public class SettingsUtils {
 +    public interface ISupportHelpAndFeedback {
 +        void onHelpAndFeebackPressed();
 +    }
- }
++
+     /**
+      * A helper that is used to load preferences from XML resources without causing a
+      * StrictModeViolation. See http://crbug.com/692125.
 --

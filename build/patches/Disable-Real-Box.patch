@@ -4,16 +4,16 @@ Subject: Disable Real Box
 
 Real-box is search box in ntp
 ---
- chrome/browser/prefs/browser_prefs.cc                  | 2 +-
- chrome/browser/resources/new_tab_page/app.html         | 5 -----
- chrome/browser/ui/webui/searchbox/searchbox_handler.cc | 1 +
- components/search/ntp_features.cc                      | 6 +++---
- 4 files changed, 5 insertions(+), 9 deletions(-)
+ chrome/browser/prefs/browser_prefs.cc                 |  2 +-
+ chrome/browser/resources/new_tab_page/app.html        | 11 -----------
+ .../browser/ui/webui/searchbox/searchbox_handler.cc   |  1 +
+ components/search/ntp_features.cc                     |  6 +++---
+ 4 files changed, 5 insertions(+), 15 deletions(-)
 
 diff --git a/chrome/browser/prefs/browser_prefs.cc b/chrome/browser/prefs/browser_prefs.cc
 --- a/chrome/browser/prefs/browser_prefs.cc
 +++ b/chrome/browser/prefs/browser_prefs.cc
-@@ -2159,7 +2159,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
+@@ -2359,7 +2359,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
    registry->RegisterBooleanPref(
        prefs::kLensRegionSearchEnabled, true,
        user_prefs::PrefRegistrySyncable::SYNCABLE_PREF);
@@ -21,26 +21,32 @@ diff --git a/chrome/browser/prefs/browser_prefs.cc b/chrome/browser/prefs/browse
 +  registry->RegisterBooleanPref(prefs::kLensDesktopNTPSearchEnabled, false);
  #endif
  
- #if !BUILDFLAG(IS_ANDROID)
+   registry->RegisterListPref(
 diff --git a/chrome/browser/resources/new_tab_page/app.html b/chrome/browser/resources/new_tab_page/app.html
 --- a/chrome/browser/resources/new_tab_page/app.html
 +++ b/chrome/browser/resources/new_tab_page/app.html
-@@ -423,11 +423,6 @@
-       hidden$="[[!logoEnabled_]]">
+@@ -21,17 +21,6 @@ import {nothing} from '//resources/lit/v3_0/lit.rollup.js';
+       .theme="${this.theme_}" ?hidden="${!this.logoEnabled_}">
    </ntp-logo>
-   <div id="realboxContainer">
--    <cr-realbox id="realbox" is-dark="[[theme_.isDark]]"
--        color-source-is-baseline="[[colorSourceIsBaseline]]"
--        on-open-lens-search="onOpenLensSearch_"
--        on-open-voice-search="onOpenVoiceSearch_" shown$="[[realboxShown_]]">
--    </cr-realbox>
-     <template is="dom-if" if="[[showLensUploadDialog_]]" restamp>
-       <ntp-lens-upload-dialog id="lensUploadDialog"
-           on-close-lens-search="onCloseLensSearch_">
+   <div id="searchboxContainer">
+-    <cr-searchbox id="searchbox" ?is-dark="${this.isThemeDark_()}"
+-        ?color-source-is-baseline="${this.colorSourceIsBaseline}"
+-        @open-composebox="${this.toggleComposebox_}"
+-        @open-lens-search="${this.onOpenLensSearch_}"
+-        @open-voice-search="${this.onOpenVoiceSearch_}" ?shown="${this.realboxShown_}"
+-        ?had-secondary-side="${this.realboxHadSecondarySide}"
+-        @had-secondary-side-changed="${this.onRealboxHadSecondarySideChanged_}"
+-        ?can-show-secondary-side="${this.realboxCanShowSecondarySide}"
+-        ?compose-button-enabled="${this.composeButtonEnabled}"
+-        ?composebox-enabled="${this.composeboxEnabled}">
+-    </cr-searchbox>
+     ${this.showComposebox_ ? html`
+       <ntp-composebox id="composebox" ?is_collapsible="false" @close-composebox="${this.closeComposebox_}">
+       </ntp-composebox>
 diff --git a/chrome/browser/ui/webui/searchbox/searchbox_handler.cc b/chrome/browser/ui/webui/searchbox/searchbox_handler.cc
 --- a/chrome/browser/ui/webui/searchbox/searchbox_handler.cc
 +++ b/chrome/browser/ui/webui/searchbox/searchbox_handler.cc
-@@ -451,6 +451,7 @@ void SearchboxHandler::SetupWebUIDataSource(content::WebUIDataSource* source,
+@@ -463,6 +463,7 @@ void SearchboxHandler::SetupWebUIDataSource(content::WebUIDataSource* source,
                                              Profile* profile,
                                              bool enable_voice_search,
                                              bool enable_lens_search) {
@@ -51,18 +57,18 @@ diff --git a/chrome/browser/ui/webui/searchbox/searchbox_handler.cc b/chrome/bro
 diff --git a/components/search/ntp_features.cc b/components/search/ntp_features.cc
 --- a/components/search/ntp_features.cc
 +++ b/components/search/ntp_features.cc
-@@ -176,7 +176,7 @@ BASE_FEATURE(kNtpHandleMostVisitedNavigationExplicitly,
-              base::FEATURE_ENABLED_BY_DEFAULT);
+@@ -127,7 +127,7 @@ BASE_FEATURE(kNtpDriveModuleShowSixFiles,
  
  // If enabled, logo will be shown.
+ // This is a kill switch. Keep indefinitely.
 -BASE_FEATURE(kNtpLogo, "NtpLogo", base::FEATURE_ENABLED_BY_DEFAULT);
 +BASE_FEATURE(kNtpLogo, "NtpLogo", base::FEATURE_DISABLED_BY_DEFAULT);
  
- // If enabled, logo will fill up less vertical space.
- BASE_FEATURE(kNtpReducedLogoSpace,
-@@ -253,8 +253,8 @@ BASE_FEATURE(kNtpMostVisitedReflowOnOverflow,
- 
+ // If enabled, middle slot promo will be shown.
+ // This is a kill switch. Keep indefinitely.
+@@ -186,8 +186,8 @@ BASE_FEATURE(kNtpModuleSignInRequirement,
  // If enabled, OneGoogleBar will be shown.
+ // This is a kill switch. Keep indefinitely.
  BASE_FEATURE(kNtpOneGoogleBar,
 -             "NtpOneGoogleBar",
 -             base::FEATURE_ENABLED_BY_DEFAULT);

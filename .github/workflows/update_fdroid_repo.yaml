@@ -2,6 +2,11 @@ name: Update fdroid repo
 
 on:
   workflow_dispatch:
+    inputs:
+      type:
+        description: 'runner? [dev/ci]'
+        required: true
+        default: 'ci'
 
 env:
   REMOVEDOCKERSUPPORT: true
@@ -10,7 +15,7 @@ env:
 
 jobs:
   update-fdroid:
-    runs-on: ci2
+    runs-on: ${{ github.event.inputs.type }}
 
     container:
       image: uazo/fdroidserver:latest
@@ -27,9 +32,11 @@ jobs:
             touch /etc/apt/apt.conf.d/proxy.conf
             echo "Acquire::http::Proxy \"$https_proxy\";" >/etc/apt/apt.conf.d/proxy.conf
 
+            cd /
+            . fdroidserver-env/bin/activate
             apt update
 
-            DEBIAN_FRONTEND=noninteractive apt update && apt install -y wget
+            DEBIAN_FRONTEND=noninteractive apt update && apt install -y wget unzip
             wget https://github.com/rclone/rclone/releases/download/v1.64.0/rclone-v1.64.0-linux-amd64.zip
             unzip rclone-v1.64.0-linux-amd64.zip
             export rclone=rclone-v1.64.0-linux-amd64/rclone

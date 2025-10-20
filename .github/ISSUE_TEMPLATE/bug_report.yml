@@ -22,6 +22,8 @@ body:
           required: true
         - label: "I have searched the existing issues for my problem. This is a new ticket, NOT a duplicate or related to another open issue."
           required: true
+        - label: "I have read the [FAQs](https://github.com/uazo/cromite/blob/master/docs/FAQ.md)."
+          required: true
         - label: "I have updated Cromite to the latest version. The bug is reproducible on this latest version."
           required: true
         - label: "This is a bug report about the Cromite browser; not the website nor F-Droid nor anything else."
@@ -91,10 +93,11 @@ body:
       multiple: false
       description: What version of Android are you running?
       options:
+        - Android 15
         - Android 14
         - Android 13
         - Android 12.1
-        - Android 12.0
+        - Android 12
         - Android 11
         - Android 10
         - Android 9
@@ -148,7 +151,7 @@ body:
   - type: dropdown
     id: is_incognito
     attributes:
-      label: Is this bug happening in an incognito tab?
+      label: Is this bug happening ONLY in an incognito tab?
       multiple: false
       options:
         - "Yes"

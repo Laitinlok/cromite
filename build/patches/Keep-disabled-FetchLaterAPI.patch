@@ -12,18 +12,18 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
  .../browser/loader/keep_alive_url_loader.cc   | 33 +++++++++++++++++--
  .../browser/loader/keep_alive_url_loader.h    |  3 --
  .../Keep-disabled-FetchLaterAPI.inc           |  2 ++
- .../renderer/core/fetch/fetch_manager.cc      | 12 +++++--
- .../loader/child_url_loader_factory_bundle.cc | 14 ++++----
+ .../renderer/core/fetch/fetch_manager.cc      | 21 ++++++++++--
+ .../loader/child_url_loader_factory_bundle.cc | 23 +++++++++----
  .../platform/loader/fetch/resource_fetcher.cc |  2 +-
- .../platform/runtime_enabled_features.json5   |  5 ++-
- 7 files changed, 54 insertions(+), 17 deletions(-)
+ .../platform/runtime_enabled_features.json5   |  4 +--
+ 7 files changed, 72 insertions(+), 16 deletions(-)
  create mode 100644 cromite_flags/third_party/blink/common/features_cc/Keep-disabled-FetchLaterAPI.inc
 
 diff --git a/content/browser/loader/keep_alive_url_loader.cc b/content/browser/loader/keep_alive_url_loader.cc
 --- a/content/browser/loader/keep_alive_url_loader.cc
 +++ b/content/browser/loader/keep_alive_url_loader.cc
-@@ -40,6 +40,36 @@
- #include "services/network/public/mojom/url_request.mojom.h"
+@@ -49,6 +49,36 @@
+ #include "third_party/abseil-cpp/absl/container/flat_hash_map.h"
  #include "third_party/blink/public/common/features.h"
  
 +namespace {
@@ -56,35 +56,35 @@ diff --git a/content/browser/loader/keep_alive_url_loader.cc b/content/browser/l
 +      })");
 +}
 +
- namespace content {
- namespace {
+ namespace features {
  
-@@ -301,7 +331,6 @@ KeepAliveURLLoader::KeepAliveURLLoader(
+ // See third_party/blink/renderer/core/fetch/retry_options.idl for details of
+@@ -436,7 +466,6 @@ KeepAliveURLLoader::KeepAliveURLLoader(
        forwarding_client_(
            std::make_unique<ForwardingClient>(this,
                                               std::move(forwarding_client))),
--      traffic_annotation_(traffic_annotation),
+-      traffic_annotation_(net::NetworkTrafficAnnotationTag(traffic_annotation)),
        network_loader_factory_(std::move(network_loader_factory)),
        stored_url_load_(std::make_unique<StoredURLLoad>()),
        policy_container_host_(std::move(policy_container_host)),
-@@ -348,7 +377,7 @@ void KeepAliveURLLoader::Start() {
+@@ -512,7 +541,7 @@ void KeepAliveURLLoader::StartInternal(bool is_retry) {
    url_loader_ = blink::ThrottlingURLLoader::CreateLoaderAndStart(
        network_loader_factory_, throttles_getter_.Run(), request_id_, options_,
        &resource_request_, forwarding_client_.get(),
--      net::NetworkTrafficAnnotationTag(traffic_annotation_),
-+      net::NetworkTrafficAnnotationTag(kTrafficAnnotation),
+-      is_retry ? kKeepAliveRetryAnnotationTag : traffic_annotation_,
++      is_retry ? kKeepAliveRetryAnnotationTag : kTrafficAnnotation,
        base::SingleThreadTaskRunner::GetCurrentDefault(),
        /*cors_exempt_header_list=*/std::nullopt,
        // `this`'s lifetime is at least the same as `url_loader_`.
 diff --git a/content/browser/loader/keep_alive_url_loader.h b/content/browser/loader/keep_alive_url_loader.h
 --- a/content/browser/loader/keep_alive_url_loader.h
 +++ b/content/browser/loader/keep_alive_url_loader.h
-@@ -312,9 +312,6 @@ class CONTENT_EXPORT KeepAliveURLLoader
+@@ -429,9 +429,6 @@ class CONTENT_EXPORT KeepAliveURLLoader
    // disconnected from the remote of URLLoader in the renderer.
    base::OneShotTimer disconnected_loader_timer_;
  
 -  // The NetworkTrafficAnnotationTag for the request being loaded.
--  net::MutableNetworkTrafficAnnotationTag traffic_annotation_;
+-  net::NetworkTrafficAnnotationTag traffic_annotation_;
 -
    // A refptr to the URLLoaderFactory implementation that can actually create a
    // URLLoader. An extra refptr is required here to support deferred loading.
@@ -99,50 +99,86 @@ new file mode 100644
 diff --git a/third_party/blink/renderer/core/fetch/fetch_manager.cc b/third_party/blink/renderer/core/fetch/fetch_manager.cc
 --- a/third_party/blink/renderer/core/fetch/fetch_manager.cc
 +++ b/third_party/blink/renderer/core/fetch/fetch_manager.cc
-@@ -1176,7 +1176,11 @@ void FetchManager::Loader::Failed(
-   if (resolver_) {
+@@ -276,6 +276,7 @@ class ResponseResolver final : public GarbageCollected<ResponseResolver> {
+   // Rejects the promise with the supplied object.
+   void Reject(v8::Local<v8::Value> error);
+   void Reject(DOMException*);
++  void Detach();
+ 
+   // Rejects the promise with the TypeError exception created at construction
+   // time. Also optionally passes `devtools_request_id`, `issue_id`, and
+@@ -331,6 +332,12 @@ void ResponseResolver::Reject(DOMException* dom_exception) {
+   Clear();
+ }
+ 
++void ResponseResolver::Detach() {
++  CHECK(resolver_);
++  resolver_->Detach();
++  Clear();
++}
++
+ void ResponseResolver::RejectBecauseFailed(
+     std::optional<String> devtools_request_id,
+     std::optional<base::UnguessableToken> issue_id,
+@@ -1312,10 +1319,20 @@ void FetchManager::Loader::Failed(
+   if (response_resolver_) {
      ScriptState::Scope scope(GetScriptState());
      if (dom_exception) {
--      resolver_->Reject(dom_exception);
+-      response_resolver_->Reject(dom_exception);
 +      if (!GetFetchRequestData()->Keepalive()) {
-+        resolver_->Reject(dom_exception);
++        response_resolver_->Reject(dom_exception);
 +      } else {
-+        resolver_->Detach();
++        response_resolver_->Detach();
 +      }
      } else {
-       v8::Local<v8::Value> value =
-           exception_.Get(GetScriptState()->GetIsolate());
-@@ -1196,7 +1200,11 @@ void FetchManager::Loader::Failed(
-             V8String(GetScriptState()->GetIsolate(),
-                      IdentifiersFactory::IdFromToken(*issue_id)));
-       }
--      resolver_->Reject(value);
+-      response_resolver_->RejectBecauseFailed(
 +      if (!GetFetchRequestData()->Keepalive()) {
-+        resolver_->Reject(value);;
++        response_resolver_->RejectBecauseFailed(
+           std::move(devtools_request_id), issue_id, std::move(issue_summary));
 +      } else {
-+        resolver_->Detach();
++        devtools_request_id.reset();
++        issue_summary.reset();
++        response_resolver_->Detach();
 +      }
-       SendHistogram(FetchManagerLoaderCheckPoint::kFailed);
        LogIfKeepalive("Failed");
      }
+     response_resolver_.Clear();
 diff --git a/third_party/blink/renderer/platform/loader/child_url_loader_factory_bundle.cc b/third_party/blink/renderer/platform/loader/child_url_loader_factory_bundle.cc
 --- a/third_party/blink/renderer/platform/loader/child_url_loader_factory_bundle.cc
 +++ b/third_party/blink/renderer/platform/loader/child_url_loader_factory_bundle.cc
-@@ -254,17 +254,19 @@ void ChildURLLoaderFactoryBundle::CreateLoaderAndStart(
+@@ -13,6 +13,7 @@
+ #include "base/check.h"
+ #include "mojo/public/cpp/bindings/self_owned_receiver.h"
+ #include "net/base/load_flags.h"
++#include "net/base/registry_controlled_domains/registry_controlled_domain.h"
+ #include "services/network/public/cpp/record_ontransfersizeupdate_utils.h"
+ #include "services/network/public/cpp/resource_request.h"
+ #include "services/network/public/mojom/early_hints.mojom.h"
+@@ -250,6 +251,20 @@ void ChildURLLoaderFactoryBundle::CreateLoaderAndStart(
      return;
    }
  
 +  bool keepalive = request.keepalive;
-+  if (keepalive && !request.is_fetch_later_api &&
-+        url::IsSameOriginWith(request.url, request.referrer)) {
-+    keepalive = false;
++  if (keepalive && !request.is_fetch_later_api) {
++    if (request.request_initiator
++          && !request.request_initiator->opaque()
++          && net::registry_controlled_domains::SameDomainOrHost(
++                request.url, *request.request_initiator,
++                net::registry_controlled_domains::INCLUDE_PRIVATE_REGISTRIES)) {
++      keepalive = false;
++    }
++    else if (url::IsSameOriginWith(request.url, request.referrer)) {
++      keepalive = false;
++    }
 +  }
 +
    // Use |keep_alive_loader_factory_| to send the keepalive requests to the
    // KeepAliveURLLoaderService in the browser process and trigger the special
    // keepalive request handling.
-   // |keep_alive_loader_factory_| only presents when
-   // features::kKeepAliveInBrowserMigration is true.
+@@ -258,12 +273,8 @@ void ChildURLLoaderFactoryBundle::CreateLoaderAndStart(
+   if (request.keepalive) {
+     FetchUtils::LogFetchKeepAliveRequestSentToServiceMetric(request);
+   }
 -  if (request.keepalive && keep_alive_loader_factory_ &&
 -      base::FeatureList::IsEnabled(features::kKeepAliveInBrowserMigration) &&
 -      (request.attribution_reporting_eligibility ==
@@ -157,7 +193,7 @@ diff --git a/third_party/blink/renderer/platform/loader/child_url_loader_factory
 diff --git a/third_party/blink/renderer/platform/loader/fetch/resource_fetcher.cc b/third_party/blink/renderer/platform/loader/fetch/resource_fetcher.cc
 --- a/third_party/blink/renderer/platform/loader/fetch/resource_fetcher.cc
 +++ b/third_party/blink/renderer/platform/loader/fetch/resource_fetcher.cc
-@@ -2660,7 +2660,7 @@ void ResourceFetcher::PrepareForLeakDetection() {
+@@ -2991,7 +2991,7 @@ void ResourceFetcher::PrepareForLeakDetection() {
  void ResourceFetcher::StopFetchingInternal(StopFetchingTarget target) {
    // TODO(toyoshim): May want to suspend scheduler while canceling loaders so
    // that the cancellations below do not awake unnecessary scheduling.
@@ -169,17 +205,15 @@ diff --git a/third_party/blink/renderer/platform/loader/fetch/resource_fetcher.c
 diff --git a/third_party/blink/renderer/platform/runtime_enabled_features.json5 b/third_party/blink/renderer/platform/runtime_enabled_features.json5
 --- a/third_party/blink/renderer/platform/runtime_enabled_features.json5
 +++ b/third_party/blink/renderer/platform/runtime_enabled_features.json5
-@@ -1677,10 +1677,9 @@
-     },
+@@ -2194,8 +2194,8 @@
      {
        // The Blink runtime-enabled feature name for the API's IDL.
+       // https://chromestatus.com/feature/4654499737632768
 -      name: "FetchLaterAPI",
--      status: "experimental",
-+      name: "FetchLaterAPI",   // disable
-+      status: "experimental",  // by default
-       origin_trial_feature_name: "FetchLaterAPI",
--      origin_trial_allows_third_party: true,
-       base_feature: "FetchLaterAPI",
-       // base_feature is meant as kill-switch. This runtime-enabled feature
-       // should follow the Origin Trial unless explicitly overriden by Finch or
+-      status: "stable",
++      name: "FetchLaterAPI",   // disabled
++      status: "stable",  // by default (note: idl must be active)
+     },
+     {
+       // The retry ability for Fetch keepalive requests.
 --

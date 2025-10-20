@@ -5,41 +5,14 @@
 // developerPrivate API.
 // This is a private API exposing developing and debugging functionalities for
 // apps and extensions.
+[implemented_in = "chrome/browser/extensions/api/developer_private/developer_private_functions.h"]
 namespace developerPrivate {
-
-  // DEPRECATED: Prefer ExtensionType.
-  enum ItemType {
-    hosted_app,
-    packaged_app,
-    legacy_packaged_app,
-    extension,
-    theme
-  };
-
-  // DEPRECATED: Prefer ExtensionView.
-  dictionary ItemInspectView {
-    // path to the inspect page.
-    DOMString path;
-
-    // For lazy background pages, the value is -1.
-    long render_process_id;
-    // This actually refers to a render frame.
-    long render_view_id;
-
-    boolean incognito;
-    boolean generatedBackgroundPage;
-  };
-
   // DEPRECATED: Use OpenDevTools.
   dictionary InspectOptions {
     DOMString extension_id;
     (DOMString or long) render_process_id;
     (DOMString or long) render_view_id;
     boolean incognito;
-  };
-
-  dictionary InstallWarning {
-    DOMString message;
   };
 
   enum ExtensionType {
@@ -70,7 +43,8 @@ namespace developerPrivate {
     EXTENSION_SERVICE_WORKER_BACKGROUND,
     TAB_CONTENTS,
     OFFSCREEN_DOCUMENT,
-    EXTENSION_SIDE_PANEL
+    EXTENSION_SIDE_PANEL,
+    DEVELOPER_TOOLS
   };
 
   enum ErrorType {
@@ -88,12 +62,21 @@ namespace developerPrivate {
     ENABLED,
     DISABLED,
     TERMINATED,
-    BLACKLISTED
+    BLOCKLISTED
   };
 
   enum CommandScope {
     GLOBAL,
     CHROME
+  };
+
+  enum SafetyCheckWarningReason {
+    UNPUBLISHED,
+    POLICY,
+    MALWARE,
+    OFFSTORE,
+    UNWANTED,
+    NO_PRIVACY_PRACTICE
   };
 
   dictionary AccessModifier {
@@ -132,6 +115,7 @@ namespace developerPrivate {
     long renderViewId;
     long renderProcessId;
     boolean canInspect;
+    boolean isServiceWorker;
     StackFrame[] stackTrace;
   };
 
@@ -144,6 +128,8 @@ namespace developerPrivate {
     boolean reloading;
     boolean custodianApprovalRequired;
     boolean parentDisabledPermissions;
+    boolean unsupportedManifestVersion;
+    boolean unsupportedDeveloperExtension;
   };
 
   dictionary OptionsPage {
@@ -231,7 +217,7 @@ namespace developerPrivate {
   };
 
   dictionary ExtensionInfo {
-    DOMString? blacklistText;
+    DOMString? blocklistText;
     SafetyCheckStrings? safetyCheckText;
     Command[] commands;
     ControlledInfo? controlledInfo;
@@ -240,11 +226,15 @@ namespace developerPrivate {
     DisableReasons disableReasons;
     AccessModifier errorCollection;
     AccessModifier fileAccess;
+    boolean fileAccessPendingChange;
     HomePage homePage;
     DOMString iconUrl;
     DOMString id;
     AccessModifier incognitoAccess;
+    AccessModifier userScriptsAccess;
+    boolean incognitoAccessPendingChange;
     DOMString[] installWarnings;
+    boolean isCommandRegistrationHandledExternally;
     DOMString? launchUrl;
     Location location;
     DOMString? locationText;
@@ -257,6 +247,7 @@ namespace developerPrivate {
     DOMString? path;
     Permissions permissions;
     DOMString? prettifiedPath;
+    DOMString? recommendationsUrl;
     RuntimeError[] runtimeErrors;
     DOMString[] runtimeWarnings;
     ExtensionState state;
@@ -267,9 +258,12 @@ namespace developerPrivate {
     ExtensionView[] views;
     DOMString webStoreUrl;
     boolean showSafeBrowsingAllowlistWarning;
+    SafetyCheckWarningReason? safetyCheckWarningReason;
     boolean showAccessRequestsInToolbar;
-    boolean acknowledgeSafetyCheckWarning;
     boolean? pinnedToToolbar;
+    boolean isAffectedByMV2Deprecation;
+    boolean didAcknowledgeMV2DeprecationNotice;
+    boolean canUploadAsAccountExtension;
   };
 
   dictionary ProfileInfo {
@@ -278,43 +272,7 @@ namespace developerPrivate {
     boolean isDeveloperModeControlledByPolicy;
     boolean isIncognitoAvailable;
     boolean isChildAccount;
-  };
-
-  // DEPRECATED: Prefer ExtensionInfo.
-  dictionary ItemInfo {
-    DOMString id;
-    DOMString name;
-    DOMString version;
-    DOMString description;
-    boolean may_disable;
-    boolean enabled;
-    boolean isApp;
-    ItemType type;
-    boolean allow_activity;
-    boolean allow_file_access;
-    boolean wants_file_access;
-    boolean incognito_enabled;
-    boolean is_unpacked;
-    boolean allow_reload;
-    boolean terminated;
-    boolean allow_incognito;
-    DOMString icon_url;
-
-    // Path of an unpacked extension.
-    DOMString? path;
-
-    // Options settings page for the item.
-    DOMString? options_url;
-    DOMString? app_launch_url;
-    DOMString? homepage_url;
-    DOMString? update_url;
-    InstallWarning[] install_warnings;
-    any[] manifest_errors;
-    any[] runtime_errors;
-    boolean offline_enabled;
-
-    // All views of the current extension.
-    ItemInspectView[] views;
+    boolean isMv2DeprecationNoticeDismissed;
   };
 
   dictionary GetExtensionsInfoOptions {
@@ -326,15 +284,18 @@ namespace developerPrivate {
     DOMString extensionId;
     boolean? fileAccess;
     boolean? incognitoAccess;
+    boolean? userScriptsAccess;
     boolean? errorCollection;
     HostAccess? hostAccess;
     boolean? showAccessRequestsInToolbar;
+    SafetyCheckWarningReason? acknowledgeSafetyCheckWarningReason;
     boolean? acknowledgeSafetyCheckWarning;
     boolean? pinnedToToolbar;
   };
 
   dictionary ProfileConfigurationUpdate {
     boolean? inDeveloperMode;
+    boolean? isMv2DeprecationNoticeDismissed;
   };
 
   dictionary ExtensionCommandUpdate {
@@ -411,7 +372,7 @@ namespace developerPrivate {
     // The site set that `site` belongs to.
     SiteSet siteSet;
     // The number of extensions with access to `site`.
-    // TODO(crbug.com/1331137): A tricky edge case is when one extension
+    // TODO(crbug.com/40227416): A tricky edge case is when one extension
     // specifies something like *.foo.com and another specifies foo.com.
     // Patterns which match all subdomains should be represented differently.
     long numExtensions;
@@ -630,12 +591,9 @@ namespace developerPrivate {
   };
 
   callback VoidCallback = void ();
-  callback BooleanCallback = void (boolean result);
   callback ExtensionInfosCallback = void (ExtensionInfo[] result);
   callback ExtensionInfoCallback = void (ExtensionInfo result);
-  callback ItemsInfoCallback = void (ItemInfo[] result);
   callback ProfileInfoCallback = void (ProfileInfo info);
-  callback GetProjectsInfoCallback = void (ProjectInfo[] result);
   callback PackCallback = void (PackDirectoryResponse response);
   callback StringCallback = void (DOMString string);
   callback RequestFileSourceCallback =
@@ -646,6 +604,7 @@ namespace developerPrivate {
   callback UserAndExtensionSitesByEtldCallback = void (SiteGroup[] siteGroups);
   callback GetMatchingExtensionsForSiteCallback =
       void (MatchingExtensionInfo[] matchingExtensions);
+  callback BoolCallback = void(boolean result);
 
   interface Functions {
     // Runs auto update for extensions and apps immediately.
@@ -740,9 +699,6 @@ namespace developerPrivate {
         optional DOMString privateKeyPath,
         optional long flags,
         optional PackCallback callback);
-
-    // Returns true if the profile is managed.
-    static void isProfileManaged(BooleanCallback callback);
 
     // Reads and returns the contents of a file related to an extension which
     // caused an error.
@@ -854,6 +810,15 @@ namespace developerPrivate {
     // Dismisses the menu notification for the extensions module in Safety Hub
     // if one is active.
     static void dismissSafetyHubExtensionsMenuNotification();
+
+    // Triggers the dismissal of the mv2 deprecation notice for `extensionId`.
+    static void dismissMv2DeprecationNoticeForExtension(DOMString extensionId);
+
+    // Uploads an extension to the signed in user's account and returns whether
+    // the extension is actually uploaded in `callback`. If the extension is not
+    // eligible for upload or if there is no signed in user, returns an error.
+    static void uploadExtensionToAccount(DOMString extensionId,
+                                         BoolCallback callback);
 
     [nocompile, deprecated="Use openDevTools"]
         static void inspect(InspectOptions options,

@@ -30,12 +30,22 @@ sudo cp $WORKSPACE/goma_auth.py $WORKSPACE/goma/
 echo -e ${RED} -------- prepare vpython virtual environment ${NC}
 rm -rf /tmp/vpython*
 cd $WORKSPACE/chromium/src
-vpython -vpython-spec .vpython -vpython-root $VPYTHON_VIRTUALENV_ROOT -vpython-log-level debug -vpython-tool install
 vpython3 -vpython-spec .vpython3 -vpython-root $VPYTHON_VIRTUALENV_ROOT -vpython-log-level debug -vpython-tool install
 
 echo -e ${RED} -------- download pgo profiles ${NC}
+python3 tools/update_pgo_profiles.py --target=android-arm64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles
+python3 tools/update_pgo_profiles.py --target=android-arm32 update --gs-url-base=chromium-optimization-profiles/pgo_profiles
 python3 tools/update_pgo_profiles.py --target=win64 update --gs-url-base=chromium-optimization-profiles/pgo_profiles
 python3 tools/update_pgo_profiles.py --target=linux update --gs-url-base=chromium-optimization-profiles/pgo_profiles
+python3 v8/tools/builtins-pgo/download_profiles.py download --depot-tools third_party/depot_tools --check-v8-revision
+python3 tools/download_optimization_profile.py --newest_state=chrome/android/profiles/newest.txt \
+  --local_state=chrome/android/profiles/local.txt \
+  --output_name=chrome/android/profiles/afdo.prof \
+  --gs_url_base=chromeos-prebuilt/afdo-job/llvm
+python3 tools/download_optimization_profile.py --newest_state=chrome/android/profiles/arm.newest.txt \
+  --local_state=chrome/android/profiles/arm.local.txt \
+  --output_name=chrome/android/profiles/arm.afdo.prof \
+  --gs_url_base=chromeos-prebuilt/afdo-job/llvm
 
 echo -e ${RED} -------- download x86_64 android image ${NC}
 #echo -e "\$ParanoidMode CheckIntegrity\n\nchromium/third_party/android_sdk/public/avds/android-31/google_apis/x86_64 Ur_zl6_BRKRkf_9X3SMZ3eH2auoOyJ2kLslpTZZwi3gC" | .cipd_client ensure -ensure-file - -root $WORKSPACE/chromium/src/.android
@@ -64,9 +74,9 @@ CXX=clang++ ./configure.py --bootstrap
 
 echo -e ${RED} -------- download clang indexer ${NC}
 cd $WORKSPACE/
-wget https://github.com/clangd/clangd/releases/download/snapshot_20211205/clangd_indexing_tools-linux-snapshot_20211205.zip
-unzip clangd_indexing_tools-linux-snapshot_20211205.zip
-rm clangd_indexing_tools-linux-snapshot_20211205.zip
+wget https://github.com/clangd/clangd/releases/download/snapshot_20250518/clangd_indexing_tools-linux-snapshot_20250518.zip
+unzip clangd_indexing_tools-linux-snapshot_20250518.zip
+rm clangd_indexing_tools-linux-snapshot_20250518.zip
 
 echo -e ${RED} -------- download rc ${NC}
 cd $WORKSPACE/chromium/src
@@ -75,6 +85,11 @@ python3 third_party/depot_tools/download_from_google_storage.py	\
     --bucket chromium-browser-clang/rc \
     -s build/toolchain/win/rc/linux64/rc.sha1
 
-echo -e ${RED} -------- download win clang prebuilds ${NC}
+echo -e ${RED} -------- download clang prebuilds ${NC}
 cd $WORKSPACE/chromium/src
 python3 tools/clang/scripts/update.py --package=clang --host-os=win --no-clear=true
+python3 tools/clang/scripts/update.py --package=clang --host-os=linux --no-clear=true
+
+echo -e ${RED} -------- bootstrap python3 for gn ${NC}
+cd $WORKSPACE/chromium/src
+echo ../../../../../usr/bin >$WORKSPACE/depot_tools/python3_bin_reldir.txt

@@ -11,7 +11,7 @@ License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
 diff --git a/third_party/blink/renderer/platform/media/web_media_player_impl.cc b/third_party/blink/renderer/platform/media/web_media_player_impl.cc
 --- a/third_party/blink/renderer/platform/media/web_media_player_impl.cc
 +++ b/third_party/blink/renderer/platform/media/web_media_player_impl.cc
-@@ -1197,6 +1197,12 @@ bool WebMediaPlayerImpl::HasAudio() const {
+@@ -1330,6 +1330,12 @@ bool WebMediaPlayerImpl::HasAudio() const {
    return pipeline_metadata_.has_audio;
  }
  
@@ -22,11 +22,11 @@ diff --git a/third_party/blink/renderer/platform/media/web_media_player_impl.cc 
 +}
 +
  void WebMediaPlayerImpl::EnabledAudioTracksChanged(
-     const WebVector<WebMediaPlayer::TrackId>& enabledTrackIds) {
+     std::optional<WebMediaPlayer::TrackId> enabled_track_id) {
    DCHECK(main_task_runner_->BelongsToCurrentThread());
-@@ -3541,7 +3547,10 @@ bool WebMediaPlayerImpl::ShouldPausePlaybackWhenHidden() const {
-           : HasAudio();
+@@ -3679,7 +3685,10 @@ bool WebMediaPlayerImpl::ShouldPausePlaybackWhenHidden() const {
  
+   const bool preserve_audio = HasUnmutedAudio() || audio_source_provider_->IsAudioBeingCaptured();
    // Audio only stream is allowed to play when in background.
 -  if (!HasVideo() && preserve_audio)
 +  //pipeline_metadata_.has_video is true for MediaPlayerRenderer,
@@ -35,7 +35,7 @@ diff --git a/third_party/blink/renderer/platform/media/web_media_player_impl.cc 
 +  if (!HasVideoNonEmptySize() && preserve_audio)
      return false;
  
-   // MediaPlayer always signals audio and video, so use an empty natural size to
+   // Video PiP is the only exception when background video playback is disabled.
 diff --git a/third_party/blink/renderer/platform/media/web_media_player_impl.h b/third_party/blink/renderer/platform/media/web_media_player_impl.h
 --- a/third_party/blink/renderer/platform/media/web_media_player_impl.h
 +++ b/third_party/blink/renderer/platform/media/web_media_player_impl.h
@@ -47,6 +47,6 @@ diff --git a/third_party/blink/renderer/platform/media/web_media_player_impl.h b
 +  bool HasVideoNonEmptySize() const;
 +
    void EnabledAudioTracksChanged(
-       const WebVector<WebMediaPlayer::TrackId>& enabledTrackIds) override;
+       std::optional<WebMediaPlayer::TrackId> enabled_track_id) override;
    void SelectedVideoTrackChanged(
 --

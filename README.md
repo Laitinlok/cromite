@@ -14,7 +14,7 @@
 
 Cromite is a [Chromium](https://www.chromium.org/Home) fork based on [Bromite](https://github.com/bromite/bromite) with built-in support for ad blocking and an eye for privacy.
 
-Cromite is available for Android arm64-v8a, arm32-v7a and x86_64, Nougat and above (Minimum v7.0, API level 24), Windows and Linux 64bit.
+Cromite is available for Android arm64-v8a, arm32-v7a and x86_64, Android 10 and above, Windows and Linux 64bit.
 
 # Goals
 
@@ -27,12 +27,13 @@ In addition, Cromite would like to promote greater integration with other non-pr
 
 # Privacy limitations
 
-Cromite's privacy features, including anti-fingerprinting mitigations (which are not comprehensive), **are not to be considered useful for journalists and people living in countries with freedom limitations**, please look at [Tor Browser](https://www.torproject.org/download/) in such cases.
+Cromite's privacy features, including anti-fingerprinting mitigations (which are not comprehensive), **are not to be considered useful for journalists and people living in countries with freedom limitations**, please look at [Tor Browser](https://www.torproject.org/download/) in such cases (better to use the desktop version).
 Please note that this project is not free of bugs and that changing the behaviour of a browser can be risky and not without problems.
 
 # Docs
 - [Privacy Policy](https://github.com/uazo/cromite/blob/master/docs/PRIVACY_POLICY.md)
 - [Features](https://github.com/uazo/cromite/blob/master/docs/FEATURES.md)
+- [Faqs](https://github.com/uazo/cromite/blob/master/docs/FAQ.md)
 - [How to build](https://github.com/uazo/cromite/blob/master/docs/HOW_TO_BUILD.md)
 - [Patch list](https://github.com/uazo/cromite/blob/master/docs/PATCHES.md)
 
@@ -40,16 +41,58 @@ Please note that this project is not free of bugs and that changing the behaviou
 
 All built versions are available as [releases](https://github.com/uazo/cromite/releases).
 
-Cromite is currently built for ARM64, x86 (Android SDK version 23+) and Windows x64.
+Cromite is currently built for ARM, ARM64, Android x86, Windows x64 and Linux.
 
-You will automatically receive notifications about new updates (and be able to install them) via the auto updater functionality (enabled by default), see [related wiki page](https://github.com/bromite/bromite/wiki/AutomaticUpdates).
+The following files will be present for each release:
+
+#### Cromite apk for android:
+- [arm64_ChromePublic.apk](https://github.com/uazo/cromite/releases/latest/download/arm64_ChromePublic.apk)
+- [arm_ChromePublic.apk](https://github.com/uazo/cromite/releases/latest/download/arm_ChromePublic.apk)
+- [x64_ChromePublic.apk](https://github.com/uazo/cromite/releases/latest/download/x64_ChromePublic.apk)
+
+#### Linux package:
+- [chrome-lin64.tar.gz](https://github.com/uazo/cromite/releases/latest/download/chrome-lin64.tar.gz)
+
+#### Windows package:
+- [chrome-win.zip](https://github.com/uazo/cromite/releases/latest/download/chrome-win.zip)
+
+#### Debugging symbols and proguard file for java stacktrace deobfuscation
+- x64_ChromePublic.apk.mapping
+- arm64_ChromePublic.apk.mapping
+- arm64_symbols.zip
+
+#### Build time analysis file:
+- arm64_ninja_log_trace.html
+
+#### Chrlauncher autoupdate file:
+- updateurl.txt
+
+Additional files are also available: please note that these files are created by an [additional build](https://github.com/uazo/cromite/actions/workflows/build_additional_targets.yaml) separate from the release process, and therefore may not be immediately available.
+
+#### Cromite System WebView apk for android:
+- arm64_SystemWebView.apk
+- x64_SystemWebView.apk
+
+#### Vanilla Chromium for android (used for tests):
+- arm64_VanillaChromium.apk
+- arm_VanillaChromium.apk
+- x64_VanillaChromium.apk
+
+#### SystemWebView Shell (used for tests)
+- arm64_SystemWebViewShell.apk
+- x64_SystemWebViewShell.apk
 
 ### F-droid
 
 Official F-droid repo url:
 https://www.cromite.org/fdroid/repo/?fingerprint=49F37E74DEE483DCA2B991334FB5A0200787430D0B5F9A783DD5F13695E9517B
 
-### Auto-update setup for windows
+### Auto-update in Android
+
+You will automatically receive notifications about new updates (and be able to install them) via the auto updater functionality.
+You will be asked whether you want to activate the functionality during the first start-up.
+
+### Auto-update setup for Windows
 
 1. Download https://github.com/henrypp/chrlauncher/releases
 2. Create a `chrlauncher.ini`
@@ -63,7 +106,7 @@ ChromiumUpdateUrl=https://github.com/uazo/cromite/releases/latest/download/updat
 # Command line for Chromium (string):
 # note --user-data-dir= works better if path is absolute
 # See here: http://peter.sh/experiments/chromium-command-line-switches/
-ChromiumCommandLine=--user-data-dir="C:\Users\<my user>\AppData\Local\Chromium\User Data" --no-default-browser-check
+ChromiumCommandLine=--user-data-dir="%LOCALAPPDATA%\Cromite\User Data" --no-default-browser-check
 
 # to enable full logging in c:\temp\log.txt (daily rotate, no automatic deletion)
 # ChromiumCommandLine=--enable-logging --v=0 --log-file=C:\temp\log.txt --user-data-dir=".\User Data" --no-default-browser-check
@@ -86,13 +129,36 @@ icacls . /grant "*S-1-15-2-2:(OI)(CI)(RX)"
 see https://github.com/uazo/bromite-buildtools/issues/51
 
 ### Enable AppContainer for renderer process in windows
-you can activate the 'RendererAppContainer' flag from the command line with
+you can activate (highly recommended) the 'RendererAppContainer' flag from the command line with
 ```
   --enable-features=RendererAppContainer
 ```
 
 ### Auto-update setup for linux
 working in progress in https://github.com/uazo/cromite/issues/771
+
+### Making Cromite work in Ubuntu 24.04 and its derivatives (kubuntu, etc)
+This happens because, starting with Ubuntu 24.04, Apparmor
+restricts the use of unprivileged user namespaces. To fix this, you have several options:
+#### 1. Creating an apparmor profile for cromite
+Create `/etc/apparmor.d/chrome`, and write:
+```
+abi <abi/4.0>,
+include <tunables/global>
+
+profile cromite /home/user/cromite/chrome-lin/chrome flags=(unconfined) {
+  userns,
+
+  include if exists <local/chrome>
+}
+```
+replacing the cromite binary path with where you have placed cromite.
+
+Now, run `sudo apparmor_parser -r /etc/apparmor.d/cromite` to apply the changes.
+#### 2. Disabling the restriction until next reboot
+`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`
+#### 3. Disabling the restriction permanently
+Add `kernel.apparmor_restrict_unprivileged_userns=0` to the file `/etc/sysctl.d/60-apparmor-namespace.conf`.  Create the file if not exists.
 
 # Contributing
 
@@ -116,6 +182,17 @@ For any usage or development discussion please use GitHub Discussions: https://g
   * [Brave Browser](https://github.com/brave/brave-core) for some patches
 
 thanks to [austinhuang0131](https://github.com/austinhuang0131) for the svg icon
+
+# Donate
+
+If you want, you can donate to support cromite development through [paypal](https://www.paypal.com/pools/c/9e5lO2OIzb).
+
+Current link:
+- https://www.paypal.com/pools/c/9hEHZ6tElk
+
+Historical fundraisings links:
+- https://www.paypal.com/pools/c/9cwNgAQhRL
+- https://www.paypal.com/pools/c/9e5lO2OIzb
 
 # License
 

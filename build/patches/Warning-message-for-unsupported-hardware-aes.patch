@@ -13,11 +13,11 @@ you can remove the message by going to chrome://flags/#no-hw-aes-warning
  base/base_switches.cc                                  |  2 ++
  base/base_switches.h                                   |  1 +
  chrome/BUILD.gn                                        |  3 +++
- chrome/app/chrome_main_delegate.cc                     | 10 ++++++++++
+ chrome/app/chrome_main_delegate.cc                     |  9 +++++++++
  chrome/app/generated_resources.grd                     |  4 ++++
  chrome/browser/ui/startup/bad_flags_prompt.cc          |  9 +++++++++
  .../browser/renderer_host/render_process_host_impl.cc  |  1 +
- .../Warning-message-for-unsupported-hardware-aes.inc   |  9 +++++++++
+ .../Warning-message-for-unsupported-hardware-aes.inc   | 10 ++++++++++
  .../Warning-message-for-unsupported-hardware-aes.inc   |  4 ++++
  .../Warning-message-for-unsupported-hardware-aes.inc   |  1 +
  10 files changed, 44 insertions(+)
@@ -28,7 +28,7 @@ you can remove the message by going to chrome://flags/#no-hw-aes-warning
 diff --git a/base/base_switches.cc b/base/base_switches.cc
 --- a/base/base_switches.cc
 +++ b/base/base_switches.cc
-@@ -177,6 +177,8 @@ const char kPackageVersionName[] = "package-version-name";
+@@ -187,6 +187,8 @@ const char kPackageVersionName[] = "package-version-name";
  
  const char kDesktopModeViewportMetaEnabled[] = "dm-viewport-meta-enabled";
  
@@ -40,7 +40,7 @@ diff --git a/base/base_switches.cc b/base/base_switches.cc
 diff --git a/base/base_switches.h b/base/base_switches.h
 --- a/base/base_switches.h
 +++ b/base/base_switches.h
-@@ -35,6 +35,7 @@ extern const char kTraceToFileName[];
+@@ -34,6 +34,7 @@ extern const char kTraceToFileName[];
  extern const char kV[];
  extern const char kVModule[];
  extern const char kWaitForDebugger[];
@@ -51,7 +51,7 @@ diff --git a/base/base_switches.h b/base/base_switches.h
 diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
 --- a/chrome/BUILD.gn
 +++ b/chrome/BUILD.gn
-@@ -437,6 +437,7 @@ if (is_win) {
+@@ -427,6 +427,7 @@ if (is_win) {
        "//components/policy:generated",
        "//content/public/app",
        "//crypto",
@@ -59,19 +59,19 @@ diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
        "//headless:headless_non_renderer",
        "//headless:headless_shell_browser_lib",
        "//net:net_resources",
-@@ -1677,6 +1678,8 @@ if (is_android) {
+@@ -1636,6 +1637,8 @@ if (is_android) {
        "//chrome/common/profiler",
        "//chrome/gpu",
        "//chrome/renderer",
 +      "//crypto",
 +      "//third_party/boringssl",
+       "//components/crash/android:crash_android",
        "//components/minidump_uploader",
        "//components/safe_browsing:buildflags",
-       "//components/safe_browsing/android:safe_browsing_api_handler",
 diff --git a/chrome/app/chrome_main_delegate.cc b/chrome/app/chrome_main_delegate.cc
 --- a/chrome/app/chrome_main_delegate.cc
 +++ b/chrome/app/chrome_main_delegate.cc
-@@ -96,6 +96,9 @@
+@@ -103,6 +103,9 @@
  #include "ui/base/resource/resource_bundle.h"
  #include "ui/base/resource/scoped_startup_resource_bundle.h"
  #include "ui/base/ui_base_switches.h"
@@ -81,12 +81,11 @@ diff --git a/chrome/app/chrome_main_delegate.cc b/chrome/app/chrome_main_delegat
  
  #if BUILDFLAG(IS_WIN)
  #include <malloc.h>
-@@ -1285,6 +1288,13 @@ std::optional<int> ChromeMainDelegate::BasicStartupComplete() {
-     return chrome::RESULT_CODE_INVALID_SANDBOX_STATE;
+@@ -1090,6 +1093,12 @@ std::optional<int> ChromeMainDelegate::BasicStartupComplete() {
+   }
  #endif
  
 +if (!command_line.HasSwitch(switches::kProcessType)) {
-+  crypto::EnsureOpenSSLInit();
 +  if (EVP_has_aes_hardware() == 0) {
 +    base::CommandLine::ForCurrentProcess()->AppendSwitch(switches::kNoAESHardware);
 +  }
@@ -98,7 +97,7 @@ diff --git a/chrome/app/chrome_main_delegate.cc b/chrome/app/chrome_main_delegat
 diff --git a/chrome/app/generated_resources.grd b/chrome/app/generated_resources.grd
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -7305,6 +7305,10 @@ Keep your key file in a safe place. You will need it to create new versions of y
+@@ -7286,6 +7286,10 @@ Keep your key file in a safe place. You will need it to create new versions of y
          You are using an unsupported feature flag: <ph name="BAD_FLAG">$1<ex>SignedHTTPExchange</ex></ph>. Stability and security will suffer.
        </message>
  
@@ -112,7 +111,7 @@ diff --git a/chrome/app/generated_resources.grd b/chrome/app/generated_resources
 diff --git a/chrome/browser/ui/startup/bad_flags_prompt.cc b/chrome/browser/ui/startup/bad_flags_prompt.cc
 --- a/chrome/browser/ui/startup/bad_flags_prompt.cc
 +++ b/chrome/browser/ui/startup/bad_flags_prompt.cc
-@@ -249,6 +249,15 @@ void ShowBadFlagsPrompt(content::WebContents* web_contents) {
+@@ -259,6 +259,15 @@ void ShowBadFlagsPrompt(content::WebContents* web_contents) {
        return;
      }
    }
@@ -131,8 +130,8 @@ diff --git a/chrome/browser/ui/startup/bad_flags_prompt.cc b/chrome/browser/ui/s
 diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
 --- a/content/browser/renderer_host/render_process_host_impl.cc
 +++ b/content/browser/renderer_host/render_process_host_impl.cc
-@@ -3584,6 +3584,7 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
-       switches::kLacrosUseChromeosProtectedAv1,
+@@ -3662,6 +3662,7 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
+       switches::kSchedulerBoostUrgent,
  #endif
      switches::kDesktopModeViewportMetaEnabled,
 +    switches::kNoAESHardware,
@@ -143,13 +142,14 @@ diff --git a/cromite_flags/chrome/browser/about_flags_cc/Warning-message-for-uns
 new file mode 100644
 --- /dev/null
 +++ b/cromite_flags/chrome/browser/about_flags_cc/Warning-message-for-unsupported-hardware-aes.inc
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,10 @@
 +
 +#ifdef FLAG_SECTION
 +
 +    {"no-hw-aes-warning",
 +     "Enable no aes warning message",
-+     "Displays a warning message if the device does not have aes support in the hardware", kOsDesktop | kOsAndroid,
++     "Displays a warning message if the device does not have aes support in the hardware. "
++     "The message is not shown with the feature disabled.", kOsDesktop | kOsAndroid,
 +     FEATURE_VALUE_TYPE(features::kNoAESHardwareMessage)},
 +
 +#endif

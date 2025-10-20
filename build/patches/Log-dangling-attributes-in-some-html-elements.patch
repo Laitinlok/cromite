@@ -42,7 +42,7 @@ new file mode 100644
 diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink/renderer/core/dom/document.cc
 --- a/third_party/blink/renderer/core/dom/document.cc
 +++ b/third_party/blink/renderer/core/dom/document.cc
-@@ -4789,6 +4789,14 @@ void Document::ProcessBaseElement() {
+@@ -5068,6 +5068,14 @@ void Document::ProcessBaseElement() {
    KURL base_element_url;
    if (href) {
      String stripped_href = StripLeadingAndTrailingHTMLSpaces(*href);
@@ -57,7 +57,7 @@ diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink
      if (!stripped_href.empty())
        base_element_url = KURL(FallbackBaseURL(), stripped_href);
    }
-@@ -4806,6 +4814,14 @@ void Document::ProcessBaseElement() {
+@@ -5085,6 +5093,14 @@ void Document::ProcessBaseElement() {
          !GetExecutionContext()->GetSecurityOrigin()->CanRequest(
              base_element_url)) {
        UseCounter::Count(*this, WebFeature::kBaseWithCrossOriginHref);
@@ -72,7 +72,7 @@ diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink
      }
    }
  
-@@ -4825,6 +4841,8 @@ void Document::ProcessBaseElement() {
+@@ -5115,6 +5131,8 @@ void Document::ProcessBaseElement() {
      if (target->Contains('<'))
        UseCounter::Count(*this, WebFeature::kBaseWithOpenBracketInTarget);
      base_target_ = *target;
@@ -84,7 +84,7 @@ diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink
 diff --git a/third_party/blink/renderer/core/dom/element.cc b/third_party/blink/renderer/core/dom/element.cc
 --- a/third_party/blink/renderer/core/dom/element.cc
 +++ b/third_party/blink/renderer/core/dom/element.cc
-@@ -2861,8 +2861,26 @@ void Element::StripScriptingAttributes(
+@@ -3673,8 +3673,26 @@ void Element::StripScriptingAttributes(
    attribute_vector.Shrink(destination);
  }
  
@@ -115,7 +115,7 @@ diff --git a/third_party/blink/renderer/core/dom/element.cc b/third_party/blink/
 diff --git a/third_party/blink/renderer/core/dom/element.h b/third_party/blink/renderer/core/dom/element.h
 --- a/third_party/blink/renderer/core/dom/element.h
 +++ b/third_party/blink/renderer/core/dom/element.h
-@@ -654,7 +654,8 @@ class CORE_EXPORT Element : public ContainerNode, public Animatable {
+@@ -772,7 +772,8 @@ class CORE_EXPORT Element : public ContainerNode, public Animatable {
    virtual bool HasLegalLinkAttribute(const QualifiedName&) const;
  
    // Only called by the parser immediately after element construction.
@@ -137,7 +137,7 @@ diff --git a/third_party/blink/renderer/core/editing/serializers/markup_formatte
  #include "third_party/blink/renderer/core/dom/cdata_section.h"
  #include "third_party/blink/renderer/core/dom/comment.h"
  #include "third_party/blink/renderer/core/dom/document.h"
-@@ -216,6 +218,13 @@ void MarkupFormatter::AppendAttributeValue(StringBuilder& result,
+@@ -214,6 +216,13 @@ void MarkupFormatter::AppendAttributeValue(StringBuilder& result,
                                             const Document& document) {
    if (attribute.Contains('<') || attribute.Contains('>')) {
      document.CountUse(mojom::blink::WebFeature::kAttributeValueContainsLtOrGt);
@@ -154,7 +154,7 @@ diff --git a/third_party/blink/renderer/core/editing/serializers/markup_formatte
 diff --git a/third_party/blink/renderer/core/html/forms/html_form_element.cc b/third_party/blink/renderer/core/html/forms/html_form_element.cc
 --- a/third_party/blink/renderer/core/html/forms/html_form_element.cc
 +++ b/third_party/blink/renderer/core/html/forms/html_form_element.cc
-@@ -318,7 +318,7 @@ void HTMLFormElement::PrepareForSubmission(
+@@ -320,7 +320,7 @@ void HTMLFormElement::PrepareForSubmission(
      if (form_control_element && form_control_element->BlocksFormSubmission()) {
        UseCounter::Count(GetDocument(),
                          WebFeature::kFormSubmittedWithUnclosedFormControl);
@@ -194,7 +194,7 @@ diff --git a/third_party/blink/renderer/core/html/html_base_element.h b/third_pa
 diff --git a/third_party/blink/renderer/core/html/html_frame_element_base.cc b/third_party/blink/renderer/core/html/html_frame_element_base.cc
 --- a/third_party/blink/renderer/core/html/html_frame_element_base.cc
 +++ b/third_party/blink/renderer/core/html/html_frame_element_base.cc
-@@ -119,6 +119,16 @@ void HTMLFrameElementBase::ParseAttribute(
+@@ -120,6 +120,16 @@ void HTMLFrameElementBase::ParseAttribute(
      frame_name_ = value;
    } else if (name == html_names::kNameAttr) {
      frame_name_ = value;
@@ -214,7 +214,7 @@ diff --git a/third_party/blink/renderer/core/html/html_frame_element_base.cc b/t
 diff --git a/third_party/blink/renderer/core/html/html_iframe_element.cc b/third_party/blink/renderer/core/html/html_iframe_element.cc
 --- a/third_party/blink/renderer/core/html/html_iframe_element.cc
 +++ b/third_party/blink/renderer/core/html/html_iframe_element.cc
-@@ -161,6 +161,12 @@ void HTMLIFrameElement::CollectStyleForPresentationAttribute(
+@@ -168,6 +168,12 @@ void HTMLIFrameElement::CollectStyleForPresentationAttribute(
    }
  }
  
@@ -227,7 +227,7 @@ diff --git a/third_party/blink/renderer/core/html/html_iframe_element.cc b/third
  void HTMLIFrameElement::ParseAttribute(
      const AttributeModificationParams& params) {
    const QualifiedName& name = params.name;
-@@ -175,6 +181,16 @@ void HTMLIFrameElement::ParseAttribute(
+@@ -182,6 +188,16 @@ void HTMLIFrameElement::ParseAttribute(
      }
      AtomicString old_name = name_;
      name_ = value;
@@ -247,9 +247,9 @@ diff --git a/third_party/blink/renderer/core/html/html_iframe_element.cc b/third
 diff --git a/third_party/blink/renderer/core/html/html_iframe_element.h b/third_party/blink/renderer/core/html/html_iframe_element.h
 --- a/third_party/blink/renderer/core/html/html_iframe_element.h
 +++ b/third_party/blink/renderer/core/html/html_iframe_element.h
-@@ -61,6 +61,8 @@ class CORE_EXPORT HTMLIFrameElement : public HTMLFrameElementBase,
- 
-   bool Credentialless() const override { return credentialless_; }
+@@ -68,6 +68,8 @@ class CORE_EXPORT HTMLIFrameElement : public HTMLFrameElementBase,
+   const V8UnionStringOrTrustedHTML* srcdoc() const;
+   void setSrcdoc(const V8UnionStringOrTrustedHTML*, ExceptionState&);
  
 +  void ParserSetAttributes(Vector<Attribute, kAttributePrealloc>&) override;
 +
@@ -267,7 +267,7 @@ diff --git a/third_party/blink/renderer/core/loader/frame_load_request.cc b/thir
  #include "third_party/blink/renderer/core/fileapi/public_url_manager.h"
  #include "third_party/blink/renderer/core/frame/local_dom_window.h"
  #include "third_party/blink/renderer/core/html/forms/html_form_element.h"
-@@ -144,6 +145,14 @@ const LocalFrameToken* FrameLoadRequest::GetInitiatorFrameToken() const {
+@@ -149,6 +150,14 @@ void FrameLoadRequest::ResolveBlobURLIfNeeded() {
  const AtomicString& FrameLoadRequest::CleanNavigationTarget(
      const AtomicString& target) const {
    if (ContainsNewLineAndLessThan(target)) {
@@ -285,9 +285,9 @@ diff --git a/third_party/blink/renderer/core/loader/frame_load_request.cc b/thir
 diff --git a/third_party/blink/renderer/core/page/frame_tree.cc b/third_party/blink/renderer/core/page/frame_tree.cc
 --- a/third_party/blink/renderer/core/page/frame_tree.cc
 +++ b/third_party/blink/renderer/core/page/frame_tree.cc
-@@ -21,6 +21,9 @@
- #include "third_party/blink/renderer/core/page/frame_tree.h"
+@@ -22,6 +22,9 @@
  
+ #include "base/compiler_specific.h"
  #include "third_party/blink/renderer/core/dom/document.h"
 +#include "third_party/blink/renderer/core/execution_context/execution_context.h"
 +#include "third_party/blink/renderer/platform/heap/garbage_collected.h"
@@ -295,7 +295,7 @@ diff --git a/third_party/blink/renderer/core/page/frame_tree.cc b/third_party/bl
  #include "third_party/blink/renderer/core/frame/frame_client.h"
  #include "third_party/blink/renderer/core/frame/local_dom_window.h"
  #include "third_party/blink/renderer/core/frame/local_frame.h"
-@@ -41,6 +44,12 @@ namespace {
+@@ -42,6 +45,12 @@ namespace {
  
  const unsigned kInvalidChildCount = ~0U;
  
@@ -308,7 +308,7 @@ diff --git a/third_party/blink/renderer/core/page/frame_tree.cc b/third_party/bl
  }  // namespace
  
  FrameTree::FrameTree(Frame* this_frame)
-@@ -211,6 +220,19 @@ FrameTree::FindResult FrameTree::FindOrCreateFrameForNavigation(
+@@ -212,6 +221,19 @@ FrameTree::FindResult FrameTree::FindOrCreateFrameForNavigation(
    if (request.GetNavigationPolicy() != kNavigationPolicyCurrentTab)
      return FindResult(current_frame, false);
  
@@ -331,19 +331,19 @@ diff --git a/third_party/blink/renderer/core/page/frame_tree.cc b/third_party/bl
 diff --git a/third_party/blink/renderer/platform/runtime_enabled_features.json5 b/third_party/blink/renderer/platform/runtime_enabled_features.json5
 --- a/third_party/blink/renderer/platform/runtime_enabled_features.json5
 +++ b/third_party/blink/renderer/platform/runtime_enabled_features.json5
-@@ -1493,8 +1493,8 @@
-       // Experiment with preventing some instances of mutation XSS
-       // by escaping "<" and ">" in attribute values.
+@@ -2039,8 +2039,8 @@
+       // Escapes "<" and ">" in attribute values. This was launched
+       // in M139, and this flag can be removed in M141.
        // See: crbug.com/1175016
 -      name: "EscapeLtGtInAttributes",
--      status: "experimental",
+-      status: "stable",
 +      name: "EscapeLtGtInAttributes",  // enabled by default
-+      status: "stable",
++      status: "stable",  // enabled by default
      },
      {
        name: "EventTimingInteractionCount",
-@@ -2301,6 +2301,12 @@
-       name: "MacFontsDeprecateFontTraitsWorkaround",
+@@ -3024,6 +3024,12 @@
+       name: "MacDisableCtrlHomeEnd",
        status: "stable",
      },
 +    {
@@ -353,6 +353,6 @@ diff --git a/third_party/blink/renderer/platform/runtime_enabled_features.json5 
 +      status: "experimental"
 +    },
      {
-       name: "MachineLearningCommon",
-       implied_by: ["MachineLearningModelLoader", "MachineLearningNeuralNetwork"],
+       name: "MachineLearningNeuralNetwork",
+       // Enabled by webnn::mojom::features::kWebMachineLearningNeuralNetwork.
 --

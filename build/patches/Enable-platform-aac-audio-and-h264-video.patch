@@ -9,6 +9,7 @@ not have the necessary licences.
 Context: https://github.com/uazo/cromite/pull/856
 License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
 ---
+ .../Enable-platform-aac-audio-and-h264-video.inc    |  7 +++++++
  media/BUILD.gn                                      |  2 ++
  .../src/org/chromium/media/AudioManagerAndroid.java |  2 ++
  media/base/android/media_codec_util.cc              |  4 ++++
@@ -19,8 +20,21 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
  media/filters/win/media_foundation_audio_decoder.cc |  9 +++++++++
  media/gpu/windows/supported_profile_helpers.cc      | 13 ++++++++++++-
  media/media_options.gni                             |  8 ++++++++
- 10 files changed, 64 insertions(+), 1 deletion(-)
+ 11 files changed, 71 insertions(+), 1 deletion(-)
+ create mode 100644 cromite_flags/media/base/media_switches_cc/Enable-platform-aac-audio-and-h264-video.inc
 
+diff --git a/cromite_flags/media/base/media_switches_cc/Enable-platform-aac-audio-and-h264-video.inc b/cromite_flags/media/base/media_switches_cc/Enable-platform-aac-audio-and-h264-video.inc
+new file mode 100644
+--- /dev/null
++++ b/cromite_flags/media/base/media_switches_cc/Enable-platform-aac-audio-and-h264-video.inc
+@@ -0,0 +1,7 @@
++#if BUILDFLAG(IS_LINUX)
++
++SET_CROMITE_FEATURE_ENABLED(kAcceleratedVideoDecodeLinuxGL);
++SET_CROMITE_FEATURE_ENABLED(kAcceleratedVideoEncodeLinux);
++SET_CROMITE_FEATURE_ENABLED(kVaapiIgnoreDriverChecks);
++
++#endif
 diff --git a/media/BUILD.gn b/media/BUILD.gn
 --- a/media/BUILD.gn
 +++ b/media/BUILD.gn
@@ -36,7 +50,7 @@ diff --git a/media/BUILD.gn b/media/BUILD.gn
 diff --git a/media/base/android/java/src/org/chromium/media/AudioManagerAndroid.java b/media/base/android/java/src/org/chromium/media/AudioManagerAndroid.java
 --- a/media/base/android/java/src/org/chromium/media/AudioManagerAndroid.java
 +++ b/media/base/android/java/src/org/chromium/media/AudioManagerAndroid.java
-@@ -562,6 +562,8 @@ class AudioManagerAndroid {
+@@ -668,6 +668,8 @@ class AudioManagerAndroid {
                              break;
                      }
                  }
@@ -48,15 +62,15 @@ diff --git a/media/base/android/java/src/org/chromium/media/AudioManagerAndroid.
 diff --git a/media/base/android/media_codec_util.cc b/media/base/android/media_codec_util.cc
 --- a/media/base/android/media_codec_util.cc
 +++ b/media/base/android/media_codec_util.cc
-@@ -15,6 +15,7 @@
- #include "base/containers/contains.h"
+@@ -16,6 +16,7 @@
  #include "base/logging.h"
  #include "base/strings/string_util.h"
+ #include "base/system/sys_info.h"
 +#include "media/media_buildflags.h"
  #include "media/base/android/media_codec_bridge.h"
- #include "media/base/android/media_jni_headers/CodecProfileLevelList_jni.h"
- #include "media/base/android/media_jni_headers/MediaCodecUtil_jni.h"
-@@ -113,6 +114,9 @@ std::string MediaCodecUtil::CodecToAndroidMimeType(AudioCodec codec) {
+ #include "media/base/video_codecs.h"
+ #include "third_party/re2/src/re2/re2.h"
+@@ -140,6 +141,9 @@ std::string MediaCodecUtil::CodecToAndroidMimeType(AudioCodec codec) {
  // static
  std::string MediaCodecUtil::CodecToAndroidMimeType(AudioCodec codec,
                                                     SampleFormat sample_format) {
@@ -64,20 +78,20 @@ diff --git a/media/base/android/media_codec_util.cc b/media/base/android/media_c
 +  if (codec == AudioCodec::kAAC) return kAacMimeType;
 +#endif
    // Passthrough is possible for some bitstream formats.
-   const bool is_passthrough = sample_format == kSampleFormatDts ||
-                               sample_format == kSampleFormatDtsxP2 ||
+   if (sample_format == kSampleFormatDts ||
+       sample_format == kSampleFormatDtsxP2 ||
 diff --git a/media/base/win/mf_helpers.cc b/media/base/win/mf_helpers.cc
 --- a/media/base/win/mf_helpers.cc
 +++ b/media/base/win/mf_helpers.cc
-@@ -17,6 +17,7 @@
- #include "base/check_op.h"
- #include "base/win/scoped_co_mem.h"
- #include "base/win/windows_version.h"
+@@ -28,6 +28,7 @@
+ #include "gpu/command_buffer/service/shared_image/shared_image_manager.h"
+ #include "gpu/command_buffer/service/shared_image/shared_image_representation.h"
+ #include "gpu/ipc/common/dxgi_helpers.h"
 +#include "media/media_buildflags.h"
  #include "media/base/audio_codecs.h"
  #include "media/base/audio_decoder_config.h"
  #include "media/base/channel_layout.h"
-@@ -463,7 +464,11 @@ HRESULT GetAacAudioType(const AudioDecoderConfig& decoder_config,
+@@ -479,7 +480,11 @@ HRESULT GetAacAudioType(const AudioDecoderConfig& decoder_config,
  
    size_t extra_size = wave_format_size - sizeof(WAVEFORMATEX);
    aac_wave_format->wfx.cbSize = static_cast<WORD>(extra_size);
@@ -92,7 +106,7 @@ diff --git a/media/base/win/mf_helpers.cc b/media/base/win/mf_helpers.cc
 diff --git a/media/filters/ffmpeg_audio_decoder.cc b/media/filters/ffmpeg_audio_decoder.cc
 --- a/media/filters/ffmpeg_audio_decoder.cc
 +++ b/media/filters/ffmpeg_audio_decoder.cc
-@@ -91,6 +91,16 @@ void FFmpegAudioDecoder::Initialize(const AudioDecoderConfig& config,
+@@ -92,6 +92,16 @@ void FFmpegAudioDecoder::Initialize(const AudioDecoderConfig& config,
      return;
    }
  
@@ -112,7 +126,7 @@ diff --git a/media/filters/ffmpeg_audio_decoder.cc b/media/filters/ffmpeg_audio_
 diff --git a/media/filters/ffmpeg_demuxer.cc b/media/filters/ffmpeg_demuxer.cc
 --- a/media/filters/ffmpeg_demuxer.cc
 +++ b/media/filters/ffmpeg_demuxer.cc
-@@ -796,6 +796,7 @@ void FFmpegDemuxerStream::InitBitstreamConverter() {
+@@ -859,6 +859,7 @@ void FFmpegDemuxerStream::InitBitstreamConverter() {
        // FFmpeg doesn't understand xHE-AAC profiles yet, which can't be put in
        // ADTS anyways, so skip bitstream conversion when the profile is
        // unknown.
@@ -123,18 +137,18 @@ diff --git a/media/filters/ffmpeg_demuxer.cc b/media/filters/ffmpeg_demuxer.cc
 diff --git a/media/filters/ffmpeg_video_decoder.cc b/media/filters/ffmpeg_video_decoder.cc
 --- a/media/filters/ffmpeg_video_decoder.cc
 +++ b/media/filters/ffmpeg_video_decoder.cc
-@@ -17,6 +17,7 @@
- #include "base/memory/raw_ptr.h"
+@@ -18,6 +18,7 @@
+ #include "base/numerics/safe_conversions.h"
  #include "base/task/bind_post_task.h"
  #include "base/task/sequenced_task_runner.h"
 +#include "media/media_buildflags.h"
  #include "media/base/decoder_buffer.h"
  #include "media/base/limits.h"
  #include "media/base/media_log.h"
-@@ -129,6 +130,16 @@ bool FFmpegVideoDecoder::IsCodecSupported(VideoCodec codec) {
-     return false;
-   }
- #endif
+@@ -117,6 +118,16 @@ static void ReleaseVideoBufferImpl(void* opaque, uint8_t* data) {
+ 
+ // static
+ bool FFmpegVideoDecoder::IsCodecSupported(VideoCodec codec) {
 +#if BUILDFLAG(ENABLE_PLATFORM_H264_VIDEO)
 +  if (codec == VideoCodec::kH264) {
 +    return false;
@@ -145,13 +159,13 @@ diff --git a/media/filters/ffmpeg_video_decoder.cc b/media/filters/ffmpeg_video_
 +    return false;
 +  }
 +#endif
- 
-   return avcodec_find_decoder(VideoCodecToCodecID(codec)) != nullptr;
+   // We only build support for H.264.
+   return codec == VideoCodec::kH264 && IsDecoderBuiltInVideoCodec(codec);
  }
 diff --git a/media/filters/win/media_foundation_audio_decoder.cc b/media/filters/win/media_foundation_audio_decoder.cc
 --- a/media/filters/win/media_foundation_audio_decoder.cc
 +++ b/media/filters/win/media_foundation_audio_decoder.cc
-@@ -96,11 +96,15 @@ std::optional<MFT_REGISTER_TYPE_INFO> GetTypeInfo(
+@@ -106,11 +106,15 @@ std::optional<MFT_REGISTER_TYPE_INFO> GetTypeInfo(
  #endif
  #if BUILDFLAG(USE_PROPRIETARY_CODECS)
      case AudioCodec::kAAC:
@@ -167,7 +181,7 @@ diff --git a/media/filters/win/media_foundation_audio_decoder.cc b/media/filters
  #endif
  #if BUILDFLAG(ENABLE_PLATFORM_AC4_AUDIO)
      case AudioCodec::kAC4:
-@@ -314,8 +318,13 @@ void MediaFoundationAudioDecoder::Reset(base::OnceClosure reset_cb) {
+@@ -332,8 +336,13 @@ void MediaFoundationAudioDecoder::Reset(base::OnceClosure reset_cb) {
  }
  
  bool MediaFoundationAudioDecoder::NeedsBitstreamConversion() const {
@@ -180,11 +194,11 @@ diff --git a/media/filters/win/media_foundation_audio_decoder.cc b/media/filters
 +#endif
  }
  
- bool MediaFoundationAudioDecoder::CreateDecoder() {
+ HRESULT MediaFoundationAudioDecoder::CreateDecoder() {
 diff --git a/media/gpu/windows/supported_profile_helpers.cc b/media/gpu/windows/supported_profile_helpers.cc
 --- a/media/gpu/windows/supported_profile_helpers.cc
 +++ b/media/gpu/windows/supported_profile_helpers.cc
-@@ -252,7 +252,11 @@ SupportedResolutionRangeMap GetSupportedD3DVideoDecoderResolutions(
+@@ -290,7 +290,11 @@ SupportedResolutionRangeMap GetSupportedD3DVideoDecoderResolutions(
    //
    // On Windows 7 the maximum resolution supported by media foundation is
    // 1920 x 1088. We use 1088 to account for 16x16 macro-blocks.
@@ -196,7 +210,7 @@ diff --git a/media/gpu/windows/supported_profile_helpers.cc b/media/gpu/windows/
    SupportedResolutionRange h264_profile;
    h264_profile.min_resolution = kMinResolution;
    h264_profile.max_landscape_resolution = kDefaultMaxH264Resolution;
-@@ -260,7 +264,14 @@ SupportedResolutionRangeMap GetSupportedD3DVideoDecoderResolutions(
+@@ -298,7 +302,14 @@ SupportedResolutionRangeMap GetSupportedD3DVideoDecoderResolutions(
    // We don't have a way to map DXVA support to specific H.264 profiles, so just
    // mark all the common ones with the same level of support.
    constexpr VideoCodecProfile kSupportedH264Profiles[] = {
@@ -215,7 +229,7 @@ diff --git a/media/gpu/windows/supported_profile_helpers.cc b/media/gpu/windows/
 diff --git a/media/media_options.gni b/media/media_options.gni
 --- a/media/media_options.gni
 +++ b/media/media_options.gni
-@@ -56,6 +56,14 @@ declare_args() {
+@@ -63,6 +63,14 @@ declare_args() {
      media_use_libvpx = false
    }
  

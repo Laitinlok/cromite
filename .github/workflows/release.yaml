@@ -17,11 +17,15 @@ on:
         description: 'draft? [true/false]'
         required: true
         default: 'false'
+      comment:
+        description: 'comment'
+        required: true
         
 env:
   CROMITE_SHA: ${{ github.event.inputs.sha }}
   REMOVEDOCKERSUPPORT: true
   USELOCALIMAGE: true
+  COMMENT: ${{ github.event.inputs.comment }}
 
 jobs:
   release:
@@ -33,6 +37,7 @@ jobs:
       OUTPUTFILE_X64: /storage/images/${{ github.event.inputs.sha }}/android/false/x64/
       OUTPUTFILE_WIN: /storage/images/${{ github.event.inputs.sha }}/win/x64/
       OUTPUTFILE_LIN: /storage/images/${{ github.event.inputs.sha }}/linux/false/lin64/
+      OUTPUTFILE_WV_ARM64: /storage/images/${{ github.event.inputs.sha }}/android/false/arm64_webview/
 
     steps:
       - name: Login to Docker Hub
@@ -47,9 +52,6 @@ jobs:
           unzip pup_v0.4.0_linux_amd64.zip && rm pup_v0.4.0_linux_amd64.zip
           BRANCH=$(curl https://github.com/uazo/cromite/branch_commits/$CROMITE_SHA | ./pup -p li.branch:last-child a text{} | xargs)
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-
-          wget https://github.com/cli/cli/releases/download/v2.18.1/gh_2.18.1_linux_amd64.tar.gz
-          tar xfz gh_2.18.1_linux_amd64.tar.gz
 
       - name: Checkout 'uazo/cromite'
         uses: actions/checkout@v2
@@ -71,10 +73,7 @@ jobs:
 
           echo ${{ secrets.GITHUB_TOKEN }} | $GH auth login --with-token
 
-          echo "\`\`\`" >note
-          # echo "this is not the official release of bromite but a test version." >>note
-          # echo "you can try it at your own risk." >>note
-          echo "\`\`\`" >>note
+          echo $COMMENT >note
 
           $GH release create $VERSION-$CROMITE_SHA --notes-file note -d
 
@@ -132,7 +131,7 @@ jobs:
           cp $OUTPUTFILE_WIN/chrome_proxy.exe chrome-win/
           cp $OUTPUTFILE_WIN/chrome_pwa_launcher.exe chrome-win/
           cp $OUTPUTFILE_WIN/chrome_wer.dll chrome-win/
-          cp "/win_sdk/10.0.22621.0/Windows Kits/10/Redist/D3D/x64/d3dcompiler_47.dll" chrome-win/
+          cp "/win_sdk/sdks/Win11SDK_10.0.26100.0/Windows Kits/10/Redist/D3D/x64/d3dcompiler_47.dll" chrome-win/
           cp $OUTPUTFILE_WIN/elevation_service.exe chrome-win/
           cp "$OUTPUTFILE_WIN/First Run" chrome-win/
           cp $OUTPUTFILE_WIN/headless_lib_data.pak chrome-win/
@@ -140,7 +139,6 @@ jobs:
           cp $OUTPUTFILE_WIN/libEGL.dll chrome-win/
           cp $OUTPUTFILE_WIN/libGLESv2.dll chrome-win/
           cp $OUTPUTFILE_WIN/Logo.png chrome-win/
-          cp $OUTPUTFILE_WIN/mojo_core.dll chrome-win/
           cp $OUTPUTFILE_WIN/notification_helper.exe chrome-win/
           cp $OUTPUTFILE_WIN/resources.pak chrome-win/
           cp $OUTPUTFILE_WIN/SmallLogo.png chrome-win/
@@ -179,6 +177,7 @@ jobs:
           cp $OUTPUTFILE_LIN/snapshot_blob.bin chrome-lin/
           cp $OUTPUTFILE_LIN/xdg-mime chrome-lin/
           cp $OUTPUTFILE_LIN/xdg-settings chrome-lin/
+          cp $OUTPUTFILE_LIN/chrome_sandbox chrome-lin/
 
           tar -czvf chrome-lin64.tar.gz chrome-lin/
 
@@ -186,11 +185,25 @@ jobs:
           $GH release upload $VERSION-$CROMITE_SHA chrome-lin64.tar.gz
           echo "::endgroup::"
 
+          # android arm64 symbols
           echo "::group::-------- arm64 symbols"
           zip arm64_symbols.zip ${{ env.OUTPUTFILE_ARM64 }}/dump_syms \
                                 ${{ env.OUTPUTFILE_ARM64 }}/minidump_stackwalk \
                                 ${{ env.OUTPUTFILE_ARM64 }}/libchrome.so
           $GH release upload $VERSION-$CROMITE_SHA arm64_symbols.zip
+          echo "::endgroup::"
+
+          # android arm64
+          echo "::group::-------- android systemwebview arm64"
+          sudo cp ${{ env.OUTPUTFILE_WV_ARM64 }}/apks/SystemWebView.apk arm64_SystemWebView.apk
+          sudo chown runner arm64_SystemWebView.apk
+
+          sudo cp ${{ env.OUTPUTFILE_WV_ARM64 }}/apks/SystemWebViewShell.apk arm64_SystemWebViewShell.apk
+          sudo chown runner arm64_SystemWebViewShell.apk
+
+          echo Uploading arm64_SystemWebView
+          $GH release upload $VERSION-$CROMITE_SHA arm64_SystemWebView.apk
+          $GH release upload $VERSION-$CROMITE_SHA arm64_SystemWebViewShell.apk
           echo "::endgroup::"
 
           TIMESTAMP=$(date +%s -r chrome-win.zip)
@@ -203,7 +216,4 @@ jobs:
             $GH release edit $VERSION-$CROMITE_SHA --draft=false
           fi
 
-          VERSION=$(cat ${{ env.OUTPUTFILE_ARM64 }}/RELEASE)
-          docker push uazo/cromite:$VERSION-$CROMITE_SHA
-          docker push uazo/cromite-build:$VERSION-$CROMITE_SHA
 

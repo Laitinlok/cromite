@@ -4,16 +4,32 @@ Subject: Disable references to fonts.googleapis.com
 
 License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
 ---
- .../content/browser/dom_distiller_viewer_source.cc             | 2 +-
- components/dom_distiller/core/html/preview.html                | 2 +-
- .../dom_distiller/core/javascript/dom_distiller_viewer.js      | 2 +-
- third_party/crashpad/crashpad/doc/support/crashpad_doxygen.css | 3 +--
- 4 files changed, 4 insertions(+), 5 deletions(-)
+ .../side_panel/read_anything/read_anything_toolbar.ts         | 4 +---
+ .../content/browser/dom_distiller_viewer_source.cc            | 2 +-
+ components/dom_distiller/core/html/dom_distiller_viewer.html  | 2 --
+ components/dom_distiller/core/html/preview.html               | 2 +-
+ .../dom_distiller/core/javascript/dom_distiller_viewer.js     | 2 +-
+ .../crashpad/crashpad/doc/support/crashpad_doxygen.css        | 3 +--
+ 6 files changed, 5 insertions(+), 10 deletions(-)
 
+diff --git a/chrome/browser/resources/side_panel/read_anything/read_anything_toolbar.ts b/chrome/browser/resources/side_panel/read_anything/read_anything_toolbar.ts
+--- a/chrome/browser/resources/side_panel/read_anything/read_anything_toolbar.ts
++++ b/chrome/browser/resources/side_panel/read_anything/read_anything_toolbar.ts
+@@ -381,9 +381,7 @@ export class ReadAnythingToolbarElement extends ReadAnythingToolbarElementBase {
+     const link = document.createElement('link');
+     link.rel = 'preload';
+     link.as = 'style';
+-    link.href = 'https://fonts.googleapis.com/css?family=';
+-    link.href += chrome.readingMode.allFonts.join('|');
+-    link.href = link.href.replace(' ', '+');
++    this.setFontsLoaded();
+ 
+     link.addEventListener('load', () => {
+       link.media = 'all';
 diff --git a/components/dom_distiller/content/browser/dom_distiller_viewer_source.cc b/components/dom_distiller/content/browser/dom_distiller_viewer_source.cc
 --- a/components/dom_distiller/content/browser/dom_distiller_viewer_source.cc
 +++ b/components/dom_distiller/content/browser/dom_distiller_viewer_source.cc
-@@ -291,7 +291,7 @@ bool DomDistillerViewerSource::ShouldServiceRequest(
+@@ -295,7 +295,7 @@ bool DomDistillerViewerSource::ShouldServiceRequest(
  std::string DomDistillerViewerSource::GetContentSecurityPolicy(
      network::mojom::CSPDirectiveName directive) {
    if (directive == network::mojom::CSPDirectiveName::StyleSrc) {
@@ -22,6 +38,18 @@ diff --git a/components/dom_distiller/content/browser/dom_distiller_viewer_sourc
    } else if (directive == network::mojom::CSPDirectiveName::ChildSrc) {
      return "child-src *;";
    } else if (directive ==
+diff --git a/components/dom_distiller/core/html/dom_distiller_viewer.html b/components/dom_distiller/core/html/dom_distiller_viewer.html
+--- a/components/dom_distiller/core/html/dom_distiller_viewer.html
++++ b/components/dom_distiller/core/html/dom_distiller_viewer.html
+@@ -18,8 +18,6 @@ found in the LICENSE file.
+   <!-- Placeholder for CSP. -->
+   $1
+   <title>$i18n{title}</title>
+-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+-      rel="stylesheet">
+   <!-- Placeholder for CSS. -->
+   $2
+ </head>
 diff --git a/components/dom_distiller/core/html/preview.html b/components/dom_distiller/core/html/preview.html
 --- a/components/dom_distiller/core/html/preview.html
 +++ b/components/dom_distiller/core/html/preview.html
@@ -37,7 +65,7 @@ diff --git a/components/dom_distiller/core/html/preview.html b/components/dom_di
 diff --git a/components/dom_distiller/core/javascript/dom_distiller_viewer.js b/components/dom_distiller/core/javascript/dom_distiller_viewer.js
 --- a/components/dom_distiller/core/javascript/dom_distiller_viewer.js
 +++ b/components/dom_distiller/core/javascript/dom_distiller_viewer.js
-@@ -109,7 +109,7 @@ function maybeSetWebFont() {
+@@ -211,7 +211,7 @@ function maybeSetWebFont() {
    }
  
    const e = document.createElement('link');
@@ -53,10 +81,10 @@ diff --git a/third_party/crashpad/crashpad/doc/support/crashpad_doxygen.css b/th
   * See the License for the specific language governing permissions and
   * limitations under the License. */
  
--@import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,700&subset=latin,cyrillic-ext,greek-ext,cyrillic,greek,vietnamese,latin-ext";
--@import "https://fonts.googleapis.com/css?family=Source+Code+Pro";
+-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+-@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
 +@import "chrome://resources/css/roboto.css";
  
- body,
- table,
+ :root {
+   --font-family-normal: 'Noto Sans',
 --

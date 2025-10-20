@@ -7,6 +7,7 @@ without asking the native code
 
 License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
 ---
+ .../webview_shell/WebViewBrowserFragment.java | 56 -----------------
  .../browser/download/OMADownloadHandler.java  | 39 ------------
  .../browser/feedback/ConnectivityChecker.java | 36 +----------
  .../ConnectivityDetector.java                 | 63 -------------------
@@ -14,12 +15,78 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
  .../util/HttpURLConnectionFactoryImpl.java    |  7 +--
  .../firstrun/VariationsSeedFetcher.java       | 26 +-------
  .../chromium/net/ChromiumNetworkAdapter.java  | 13 ----
- 7 files changed, 4 insertions(+), 183 deletions(-)
+ 8 files changed, 4 insertions(+), 239 deletions(-)
 
+diff --git a/android_webview/tools/system_webview_shell/apk/src/org/chromium/webview_shell/WebViewBrowserFragment.java b/android_webview/tools/system_webview_shell/apk/src/org/chromium/webview_shell/WebViewBrowserFragment.java
+--- a/android_webview/tools/system_webview_shell/apk/src/org/chromium/webview_shell/WebViewBrowserFragment.java
++++ b/android_webview/tools/system_webview_shell/apk/src/org/chromium/webview_shell/WebViewBrowserFragment.java
+@@ -238,62 +238,6 @@ public class WebViewBrowserFragment extends Fragment {
+         /** Downloading file in background thread */
+         @Override
+         protected String doInBackground() {
+-            try {
+-                NetworkTrafficAnnotationTag annotation =
+-                        NetworkTrafficAnnotationTag.createComplete(
+-                                "android_webview_shell",
+-                                """
+-                    semantics {
+-                      sender: "WebViewBrowserFragment (Android)"
+-                      description:
+-                        "Downloads files as specified by the shell browser."
+-                      trigger: "User interations within the browser, causing a download"
+-                      data: "No additional data."
+-                      destination: LOCAL
+-                      internal {
+-                        contacts {
+-                          email: "avvall@chromium.org"
+-                        }
+-                      }
+-                      user_data {
+-                        type: NONE
+-                      }
+-                      last_reviewed: "2024-07-25"
+-                    }
+-                    policy {
+-                      cookies_allowed: NO
+-                      setting: "This feature can not be disabled."
+-                      policy_exception_justification: "Not implemented."
+-                    }""");
+-                URL url = new URL(mFileUrl);
+-                URLConnection connection = ChromiumNetworkAdapter.openConnection(url, annotation);
+-                connection.connect();
+-
+-                // download the file
+-                InputStream input =
+-                        new BufferedInputStream(ChromiumNetworkAdapter.openStream(url, annotation));
+-
+-                File path =
+-                        Environment.getExternalStoragePublicDirectory(
+-                                Environment.DIRECTORY_DOWNLOADS);
+-                File file = new File(path, mNameOfFile);
+-                // Make sure the Downloads directory exists.
+-                path.mkdirs();
+-                OutputStream output = new FileOutputStream(file);
+-
+-                int count;
+-                byte[] data = new byte[BUFFER_SIZE];
+-                while ((count = input.read(data)) != -1) {
+-                    output.write(data, 0, count);
+-                }
+-
+-                output.flush();
+-                output.close();
+-                input.close();
+-            } catch (Exception e) {
+-                Log.e(TAG, "Error: " + e.getMessage());
+-            }
+-
+             return null;
+         }
+     }
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/download/OMADownloadHandler.java b/chrome/android/java/src/org/chromium/chrome/browser/download/OMADownloadHandler.java
 --- a/chrome/android/java/src/org/chromium/chrome/browser/download/OMADownloadHandler.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/download/OMADownloadHandler.java
-@@ -1012,45 +1012,6 @@ public class OMADownloadHandler extends BroadcastReceiver {
+@@ -1019,45 +1019,6 @@ public class OMADownloadHandler extends BroadcastReceiver {
          protected Boolean doInBackground() {
              HttpURLConnection urlConnection = null;
              boolean success = false;
@@ -68,7 +135,7 @@ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/download/OMADow
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/feedback/ConnectivityChecker.java b/chrome/android/java/src/org/chromium/chrome/browser/feedback/ConnectivityChecker.java
 --- a/chrome/android/java/src/org/chromium/chrome/browser/feedback/ConnectivityChecker.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/feedback/ConnectivityChecker.java
-@@ -135,41 +135,7 @@ public final class ConnectivityChecker {
+@@ -136,41 +136,7 @@ public final class ConnectivityChecker {
              postResult(callback, ConnectivityCheckResult.ERROR);
              return;
          }
@@ -114,7 +181,7 @@ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/feedback/Connec
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/net/connectivitydetector/ConnectivityDetector.java b/chrome/android/java/src/org/chromium/chrome/browser/net/connectivitydetector/ConnectivityDetector.java
 --- a/chrome/android/java/src/org/chromium/chrome/browser/net/connectivitydetector/ConnectivityDetector.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/net/connectivitydetector/ConnectivityDetector.java
-@@ -406,69 +406,6 @@ public class ConnectivityDetector implements NetworkChangeNotifier.ConnectionTyp
+@@ -401,69 +401,6 @@ public class ConnectivityDetector implements NetworkChangeNotifier.ConnectionTyp
          new AsyncTask<Integer>() {
              @Override
              protected Integer doInBackground() {
@@ -187,10 +254,10 @@ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/net/connectivit
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/omaha/OmahaBase.java b/chrome/android/java/src/org/chromium/chrome/browser/omaha/OmahaBase.java
 --- a/chrome/android/java/src/org/chromium/chrome/browser/omaha/OmahaBase.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/omaha/OmahaBase.java
-@@ -483,8 +483,7 @@ public class OmahaBase {
+@@ -469,8 +469,7 @@ public class OmahaBase {
                  }""");
          try {
-             URL url = new URL(getRequestGenerator().getServerUrl());
+             URL url = new URL(assumeNonNull(getRequestGenerator()).getServerUrl());
 -            HttpURLConnection connection =
 -                    (HttpURLConnection) ChromiumNetworkAdapter.openConnection(url, annotation);
 +            HttpURLConnection connection = null;
@@ -200,10 +267,10 @@ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/omaha/OmahaBase
 diff --git a/components/minidump_uploader/android/java/src/org/chromium/components/minidump_uploader/util/HttpURLConnectionFactoryImpl.java b/components/minidump_uploader/android/java/src/org/chromium/components/minidump_uploader/util/HttpURLConnectionFactoryImpl.java
 --- a/components/minidump_uploader/android/java/src/org/chromium/components/minidump_uploader/util/HttpURLConnectionFactoryImpl.java
 +++ b/components/minidump_uploader/android/java/src/org/chromium/components/minidump_uploader/util/HttpURLConnectionFactoryImpl.java
-@@ -36,11 +36,6 @@ public class HttpURLConnectionFactoryImpl implements HttpURLConnectionFactory {
+@@ -40,11 +40,6 @@ public class HttpURLConnectionFactoryImpl implements HttpURLConnectionFactory {
  
      @Override
-     public HttpURLConnection createHttpURLConnection(String url) {
+     public @Nullable HttpURLConnection createHttpURLConnection(String url) {
 -        try {
 -            return (HttpURLConnection)
 -                    ChromiumNetworkAdapter.openConnection(new URL(url), TRAFFIC_ANNOTATION);
@@ -216,7 +283,7 @@ diff --git a/components/minidump_uploader/android/java/src/org/chromium/componen
 diff --git a/components/variations/android/java/src/org/chromium/components/variations/firstrun/VariationsSeedFetcher.java b/components/variations/android/java/src/org/chromium/components/variations/firstrun/VariationsSeedFetcher.java
 --- a/components/variations/android/java/src/org/chromium/components/variations/firstrun/VariationsSeedFetcher.java
 +++ b/components/variations/android/java/src/org/chromium/components/variations/firstrun/VariationsSeedFetcher.java
-@@ -187,14 +187,6 @@ public class VariationsSeedFetcher {
+@@ -194,14 +194,6 @@ public class VariationsSeedFetcher {
          ResettersForTesting.register(() -> sInstance = oldValue);
      }
  
@@ -231,7 +298,7 @@ diff --git a/components/variations/android/java/src/org/chromium/components/vari
      @VisibleForTesting
      protected List<String> getAvailableInstanceManipulations() {
          List<String> compressions = new ArrayList<String>();
-@@ -532,24 +524,8 @@ public class VariationsSeedFetcher {
+@@ -535,24 +527,8 @@ public class VariationsSeedFetcher {
          HttpURLConnection connection = null;
          try {
              long startTimeMillis = SystemClock.elapsedRealtime();
@@ -260,8 +327,8 @@ diff --git a/components/variations/android/java/src/org/chromium/components/vari
 diff --git a/net/android/java/src/org/chromium/net/ChromiumNetworkAdapter.java b/net/android/java/src/org/chromium/net/ChromiumNetworkAdapter.java
 --- a/net/android/java/src/org/chromium/net/ChromiumNetworkAdapter.java
 +++ b/net/android/java/src/org/chromium/net/ChromiumNetworkAdapter.java
-@@ -23,10 +23,6 @@ public final class ChromiumNetworkAdapter {
-      *     what data gets sent, what triggers it, etc.
+@@ -26,10 +26,6 @@ public final class ChromiumNetworkAdapter {
+      *     data gets sent, what triggers it, etc.
       * @return a URLConnection linking to the URL.
       */
 -    public static URLConnection openConnection(
@@ -271,8 +338,8 @@ diff --git a/net/android/java/src/org/chromium/net/ChromiumNetworkAdapter.java b
  
      /**
       * Wrapper around URL#openConnection(Proxy), with an extra argument for static analysis/privacy
-@@ -38,11 +34,6 @@ public final class ChromiumNetworkAdapter {
-      *     what data gets sent, what triggers it, etc.
+@@ -41,11 +37,6 @@ public final class ChromiumNetworkAdapter {
+      *     data gets sent, what triggers it, etc.
       * @return a URLConnection linking to the URL.
       */
 -    public static URLConnection openConnection(
@@ -282,9 +349,9 @@ diff --git a/net/android/java/src/org/chromium/net/ChromiumNetworkAdapter.java b
 -    }
  
      /**
-      * Wrapper around URL#openStream(), with an extra argument for static analysis/privacy
-@@ -53,8 +44,4 @@ public final class ChromiumNetworkAdapter {
-      *     what data gets sent, what triggers it, etc.
+      * Wrapper around URL#openStream(), with an extra argument for static analysis/privacy auditing.
+@@ -55,8 +46,4 @@ public final class ChromiumNetworkAdapter {
+      *     data gets sent, what triggers it, etc.
       * @return an InputStream linking to the URL.
       */
 -    public static InputStream openStream(URL url, NetworkTrafficAnnotationTag trafficAnnotation)

@@ -24,18 +24,18 @@ License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
 diff --git a/chrome/browser/browser_features.h b/chrome/browser/browser_features.h
 --- a/chrome/browser/browser_features.h
 +++ b/chrome/browser/browser_features.h
-@@ -24,6 +24,7 @@ BASE_DECLARE_FEATURE(kAppBoundEncryptionMetrics);
- 
- BASE_DECLARE_FEATURE(kAutocompleteActionPredictorConfidenceCutoff);
- BASE_DECLARE_FEATURE(kBookmarkTriggerForPrerender2);
+@@ -37,6 +37,7 @@ BASE_DECLARE_FEATURE(kBookmarksTreeView);
+ BASE_DECLARE_FEATURE(kBookmarkTriggerForPrerender2KillSwitch);
+ BASE_DECLARE_FEATURE(kBookmarkTriggerForPreconnect);
+ BASE_DECLARE_FEATURE(kBookmarkTriggerForPrefetch);
 +BASE_DECLARE_FEATURE(kCertificateTransparency);
  BASE_DECLARE_FEATURE(kCertificateTransparencyAskBeforeEnabling);
- BASE_DECLARE_FEATURE(kClosedTabCache);
- BASE_DECLARE_FEATURE(kDeferredSpareRendererForTopChromeWebUI);
+ BASE_DECLARE_FEATURE(kCertVerificationNetworkTime);
+ BASE_DECLARE_FEATURE(kClearUserDataUponProfileDestruction);
 diff --git a/chrome/browser/net/system_network_context_manager.cc b/chrome/browser/net/system_network_context_manager.cc
 --- a/chrome/browser/net/system_network_context_manager.cc
 +++ b/chrome/browser/net/system_network_context_manager.cc
-@@ -1034,7 +1034,7 @@ bool SystemNetworkContextManager::IsCertificateTransparencyEnabled() {
+@@ -1106,7 +1106,7 @@ bool SystemNetworkContextManager::IsCertificateTransparencyEnabled() {
    //   - on an opt-in basis for other builds and embedders, controlled with the
    //     kCertificateTransparencyAskBeforeEnabling flag
    return base::FeatureList::IsEnabled(
@@ -47,7 +47,7 @@ diff --git a/chrome/browser/net/system_network_context_manager.cc b/chrome/brows
 diff --git a/chrome/browser/ssl/sct_reporting_service.cc b/chrome/browser/ssl/sct_reporting_service.cc
 --- a/chrome/browser/ssl/sct_reporting_service.cc
 +++ b/chrome/browser/ssl/sct_reporting_service.cc
-@@ -203,6 +203,11 @@ SCTReportingService::SCTReportingService(
+@@ -204,6 +204,11 @@ SCTReportingService::SCTReportingService(
  SCTReportingService::~SCTReportingService() = default;
  
  network::mojom::SCTAuditingMode SCTReportingService::GetReportingMode() {
@@ -94,9 +94,9 @@ new file mode 100644
 diff --git a/net/http/transport_security_state.cc b/net/http/transport_security_state.cc
 --- a/net/http/transport_security_state.cc
 +++ b/net/http/transport_security_state.cc
-@@ -186,6 +186,7 @@ class HSTSPreloadDecoder : public net::extras::PreloadDecoder {
+@@ -183,6 +183,7 @@ class HSTSPreloadDecoder : public extras::PreloadDecoder {
  
- bool DecodeHSTSPreload(const std::string& search_hostname, PreloadResult* out) {
+ bool DecodeHSTSPreload(std::string_view search_hostname, PreloadResult* out) {
  #if !BUILDFLAG(INCLUDE_TRANSPORT_SECURITY_STATE_PRELOAD_LIST)
 +#error "BUILDFLAG(INCLUDE_TRANSPORT_SECURITY_STATE_PRELOAD_LIST) must be enabled"
    if (g_hsts_source == nullptr)
@@ -105,7 +105,7 @@ diff --git a/net/http/transport_security_state.cc b/net/http/transport_security_
 diff --git a/services/network/sct_auditing/sct_auditing_handler.cc b/services/network/sct_auditing/sct_auditing_handler.cc
 --- a/services/network/sct_auditing/sct_auditing_handler.cc
 +++ b/services/network/sct_auditing/sct_auditing_handler.cc
-@@ -109,6 +109,7 @@ void SCTAuditingHandler::MaybeEnqueueReport(
+@@ -110,6 +110,7 @@ void SCTAuditingHandler::MaybeEnqueueReport(
    if (mode_ == mojom::SCTAuditingMode::kDisabled) {
      return;
    }

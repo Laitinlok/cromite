@@ -11,18 +11,18 @@ Require: Timezone-customization.patch
 
 License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
 ---
- .../renderer/chrome_content_renderer_client.cc  |  2 +-
- .../renderer/content_settings_agent_impl.cc     |  9 ++++++++-
- .../renderer/content_settings_agent_impl.h      |  2 ++
- content/browser/speech/tts_android.cc           |  2 +-
- content/browser/speech/tts_win.cc               |  2 +-
- .../Disable-speechSynthesis-getVoices-API.inc   |  8 ++++++++
- .../Disable-speechSynthesis-getVoices-API.inc   |  2 ++
- .../Disable-speechSynthesis-getVoices-API.inc   |  3 +++
- .../Disable-speechSynthesis-getVoices-API.inc   |  1 +
- .../platform/web_content_settings_client.h      |  2 ++
- .../renderer/modules/speech/speech_synthesis.cc | 17 ++++++++++++++---
- 11 files changed, 43 insertions(+), 7 deletions(-)
+ .../renderer/chrome_content_renderer_client.cc |  2 +-
+ .../renderer/content_settings_agent_impl.cc    |  9 ++++++++-
+ .../renderer/content_settings_agent_impl.h     |  2 ++
+ content/browser/speech/tts_android.cc          |  2 +-
+ content/browser/speech/tts_win.cc              |  2 +-
+ .../Disable-speechSynthesis-getVoices-API.inc  |  8 ++++++++
+ .../Disable-speechSynthesis-getVoices-API.inc  |  2 ++
+ .../Disable-speechSynthesis-getVoices-API.inc  |  3 +++
+ .../Disable-speechSynthesis-getVoices-API.inc  |  1 +
+ .../platform/web_content_settings_client.h     |  2 ++
+ .../modules/speech/speech_synthesis.cc         | 18 +++++++++++++++---
+ 11 files changed, 44 insertions(+), 7 deletions(-)
  create mode 100644 cromite_flags/chrome/browser/about_flags_cc/Disable-speechSynthesis-getVoices-API.inc
  create mode 100644 cromite_flags/media/base/media_switches_cc/Disable-speechSynthesis-getVoices-API.inc
  create mode 100644 cromite_flags/third_party/blink/common/features_cc/Disable-speechSynthesis-getVoices-API.inc
@@ -31,7 +31,7 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
 diff --git a/chrome/renderer/chrome_content_renderer_client.cc b/chrome/renderer/chrome_content_renderer_client.cc
 --- a/chrome/renderer/chrome_content_renderer_client.cc
 +++ b/chrome/renderer/chrome_content_renderer_client.cc
-@@ -1631,7 +1631,7 @@ ChromeContentRendererClient::CreateWorkerContentSettingsClient(
+@@ -1428,7 +1428,7 @@ ChromeContentRendererClient::CreateWorkerContentSettingsClient(
  std::unique_ptr<media::SpeechRecognitionClient>
  ChromeContentRendererClient::CreateSpeechRecognitionClient(
      content::RenderFrame* render_frame) {
@@ -43,8 +43,8 @@ diff --git a/chrome/renderer/chrome_content_renderer_client.cc b/chrome/renderer
 diff --git a/components/content_settings/renderer/content_settings_agent_impl.cc b/components/content_settings/renderer/content_settings_agent_impl.cc
 --- a/components/content_settings/renderer/content_settings_agent_impl.cc
 +++ b/components/content_settings/renderer/content_settings_agent_impl.cc
-@@ -484,6 +484,14 @@ bool ContentSettingsAgentImpl::IsAllowlistedForContentSettingsCromite() const {
-   return false;
+@@ -468,6 +468,14 @@ void ContentSettingsAgentImpl::ClearBlockedContentSettings() {
+   cached_script_permissions_.clear();
  }
  
 +bool ContentSettingsAgentImpl::IsTimezoneChanged() {
@@ -58,7 +58,7 @@ diff --git a/components/content_settings/renderer/content_settings_agent_impl.cc
  bool ContentSettingsAgentImpl::UpdateOverrides() {
    // Evaluate the content setting rules
    ContentSetting setting = CONTENT_SETTING_ALLOW;
-@@ -494,7 +502,6 @@ bool ContentSettingsAgentImpl::UpdateOverrides() {
+@@ -478,7 +486,6 @@ bool ContentSettingsAgentImpl::UpdateOverrides() {
    }
    return UpdateTimeZoneOverride(
        setting, content_setting_rules_->timezone_override_value);
@@ -69,7 +69,7 @@ diff --git a/components/content_settings/renderer/content_settings_agent_impl.cc
 diff --git a/components/content_settings/renderer/content_settings_agent_impl.h b/components/content_settings/renderer/content_settings_agent_impl.h
 --- a/components/content_settings/renderer/content_settings_agent_impl.h
 +++ b/components/content_settings/renderer/content_settings_agent_impl.h
-@@ -123,6 +123,8 @@ class ContentSettingsAgentImpl
+@@ -114,6 +114,8 @@ class ContentSettingsAgentImpl
    void SetRendererContentSettingRulesForTest(
        const RendererContentSettingRules& rules);
  
@@ -81,7 +81,7 @@ diff --git a/components/content_settings/renderer/content_settings_agent_impl.h 
 diff --git a/content/browser/speech/tts_android.cc b/content/browser/speech/tts_android.cc
 --- a/content/browser/speech/tts_android.cc
 +++ b/content/browser/speech/tts_android.cc
-@@ -42,7 +42,7 @@ TtsPlatformImplAndroid::~TtsPlatformImplAndroid() {
+@@ -44,7 +44,7 @@ TtsPlatformImplAndroid::~TtsPlatformImplAndroid() {
  }
  
  bool TtsPlatformImplAndroid::PlatformImplSupported() {
@@ -93,7 +93,7 @@ diff --git a/content/browser/speech/tts_android.cc b/content/browser/speech/tts_
 diff --git a/content/browser/speech/tts_win.cc b/content/browser/speech/tts_win.cc
 --- a/content/browser/speech/tts_win.cc
 +++ b/content/browser/speech/tts_win.cc
-@@ -155,7 +155,7 @@ class TtsPlatformImplWin : public TtsPlatformImpl {
+@@ -156,7 +156,7 @@ class TtsPlatformImplWin : public TtsPlatformImpl {
    TtsPlatformImplWin(const TtsPlatformImplWin&) = delete;
    TtsPlatformImplWin& operator=(const TtsPlatformImplWin&) = delete;
  
@@ -139,27 +139,35 @@ new file mode 100644
 diff --git a/third_party/blink/public/platform/web_content_settings_client.h b/third_party/blink/public/platform/web_content_settings_client.h
 --- a/third_party/blink/public/platform/web_content_settings_client.h
 +++ b/third_party/blink/public/platform/web_content_settings_client.h
-@@ -115,6 +115,8 @@ class WebContentSettingsClient {
+@@ -99,6 +99,8 @@ class WebContentSettingsClient {
    // frame.
    virtual bool ShouldAutoupgradeMixedContent() { return true; }
  
 +  virtual bool IsTimezoneChanged() { return false; }
 +
-   // Controls whether the ViewTransition callback needs to be larger than
-   // default.
-   virtual bool IncreaseViewTransitionCallbackTimeout() const { return false; }
+   virtual ~WebContentSettingsClient() = default;
+ };
+ 
 diff --git a/third_party/blink/renderer/modules/speech/speech_synthesis.cc b/third_party/blink/renderer/modules/speech/speech_synthesis.cc
 --- a/third_party/blink/renderer/modules/speech/speech_synthesis.cc
 +++ b/third_party/blink/renderer/modules/speech/speech_synthesis.cc
-@@ -35,6 +35,7 @@
- #include "third_party/blink/public/common/privacy_budget/identifiable_token_builder.h"
+@@ -28,6 +28,7 @@
+ #include <tuple>
+ 
+ #include "build/build_config.h"
++#include "third_party/blink/public/common/features.h"
+ #include "third_party/blink/public/common/privacy_budget/identifiability_metric_builder.h"
+ #include "third_party/blink/public/common/privacy_budget/identifiability_study_settings.h"
+ #include "third_party/blink/public/common/privacy_budget/identifiable_token.h"
+@@ -35,6 +36,7 @@
  #include "third_party/blink/public/common/thread_safe_browser_interface_broker_proxy.h"
+ #include "third_party/blink/public/platform/browser_interface_broker_proxy.h"
  #include "third_party/blink/public/platform/platform.h"
 +#include "third_party/blink/public/platform/web_content_settings_client.h"
  #include "third_party/blink/renderer/bindings/modules/v8/v8_speech_synthesis_error_event_init.h"
  #include "third_party/blink/renderer/bindings/modules/v8/v8_speech_synthesis_event_init.h"
  #include "third_party/blink/renderer/core/dom/document.h"
-@@ -93,9 +94,19 @@ SpeechSynthesis::SpeechSynthesis(LocalDOMWindow& window)
+@@ -93,9 +95,19 @@ SpeechSynthesis::SpeechSynthesis(LocalDOMWindow& window)
  void SpeechSynthesis::OnSetVoiceList(
      Vector<mojom::blink::SpeechSynthesisVoicePtr> mojom_voices) {
    voice_list_.clear();
