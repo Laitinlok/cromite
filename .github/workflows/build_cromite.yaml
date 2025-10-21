@@ -68,7 +68,7 @@ jobs:
       - name: Download regctl
         shell: bash
         run: |
-          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-arm64 >regctl
           chmod 755 regctl
 
 
