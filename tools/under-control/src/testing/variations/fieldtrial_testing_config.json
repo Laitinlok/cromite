@@ -8623,30 +8623,30 @@
             ],
             "experiments": [
                 {
-                    "name": "Control_20251027",
+                    "name": "Control_20250918",
                     "disable_features": [
-                        "kNtpTabGroupsModule",
-                        "kNtpTabGroupsModuleZeroState"
+                        "NtpTabGroupsModule",
+                        "NtpTabGroupsModuleZeroState"
                     ]
                 },
                 {
-                    "name": "SteadyState_20251027",
+                    "name": "SteadyState_20250918",
                     "enable_features": [
-                        "kNtpTabGroupsModule"
+                        "NtpTabGroupsModule"
                     ],
                     "disable_features": [
-                        "kNtpTabGroupsModuleZeroState"
+                        "NtpTabGroupsModuleZeroState"
                     ]
                 },
                 {
-                    "name": "ZeroState_20251027",
+                    "name": "ZeroState_20250918",
                     "enable_features": [
-                        "kNtpTabGroupsModule",
-                        "kNtpTabGroupsModuleZeroState"
+                        "NtpTabGroupsModule",
+                        "NtpTabGroupsModuleZeroState"
                     ]
                 },
                 {
-                    "name": "Default_20251027"
+                    "name": "Default_20250918"
                 }
             ]
         }
@@ -9509,21 +9509,6 @@
                     "name": "Enabled",
                     "enable_features": [
                         "DropInputEventsWhilePaintHolding"
-                    ]
-                }
-            ]
-        }
-    ],
-    "DumpOnOOBFontDataServiceCache": [
-        {
-            "platforms": [
-                "windows"
-            ],
-            "experiments": [
-                {
-                    "name": "Enabled",
-                    "enable_features": [
-                        "DumpOnOOBFontDataServiceCache"
                     ]
                 }
             ]
@@ -16861,6 +16846,27 @@
             "experiments": [
                 {
                     "name": "Enabled"
+                }
+            ]
+        }
+    ],
+    "OmniboxAiRhsEchoLensToolbeltDesktop": [
+        {
+            "platforms": [
+                "chromeos",
+                "linux",
+                "mac",
+                "windows"
+            ],
+            "experiments": [
+                {
+                    "name": "Enabled",
+                    "params": {
+                        "HideAimHintTextOnNtpOpen": "true"
+                    },
+                    "enable_features": [
+                        "AiModeOmniboxEntryPoint"
+                    ]
                 }
             ]
         }

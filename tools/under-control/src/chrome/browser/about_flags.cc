@@ -1659,15 +1659,6 @@ const FeatureEntry::FeatureParam kComposeboxNext[] = {
     {"ShowCreateImageTool", "true"},
     {"ForceToolsAndModels", "true"},
 };
-const FeatureEntry::FeatureParam kComposeboxNextSingleContext[] = {
-    {"MaxNumFiles", "1"},
-    {"ShowContextMenu", "true"},
-    {"ShowContextMenuTabPreviews", "true"},
-    {"ShowComposeboxZps", "true"},
-    {"ShowToolsAndModels", "true"},
-    {"ShowCreateImageTool", "true"},
-    {"ForceToolsAndModels", "true"},
-};
 
 const FeatureEntry::FeatureVariation kNtpComposeboxVariations[] = {
     {"- Show ZPS", kComposeboxShowZps, std::size(kComposeboxShowZps), nullptr},
@@ -1696,8 +1687,6 @@ const FeatureEntry::FeatureVariation kNtpComposeboxVariations[] = {
     {"- Show Create Image in Context Menu, ZPS", kShowCreateImageTool,
      std::size(kShowCreateImageTool), nullptr},
     {"- Next Experience", kComposeboxNext, std::size(kComposeboxNext), nullptr},
-    {"- Next Experience Single Context", kComposeboxNextSingleContext,
-     std::size(kComposeboxNextSingleContext), nullptr},
 };
 
 const FeatureEntry::FeatureParam kShowNextRealboxTallBottomContext[] = {
