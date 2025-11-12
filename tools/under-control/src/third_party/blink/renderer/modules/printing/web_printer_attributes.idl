@@ -13,10 +13,6 @@ dictionary WebPrintingResolution {
   WebPrintingResolutionUnits units;
 };
 
-dictionary WebPrintDocumentDescription {
-  required Blob data;
-};
-
 typedef (WebPrintingRange or unsigned long) WebPrintingMediaSizeDimension;
 
 dictionary WebPrintingMediaSize {
@@ -25,7 +21,7 @@ dictionary WebPrintingMediaSize {
 };
 
 dictionary WebPrintingMediaCollection {
-  DOMString mediaSizeName;
+  USVString mediaSizeName;
   WebPrintingMediaSize mediaSize;
 };
 
@@ -42,22 +38,29 @@ dictionary WebPrintJobTemplateAttributes {
   unsigned long copies;
 
   WebPrintingMediaCollectionRequested mediaCol;
+  USVString mediaSource;
   WebPrintingMultipleDocumentHandling multipleDocumentHandling;
   WebPrintingOrientationRequested orientationRequested;
   WebPrintingResolution printerResolution;
   WebPrintColorMode printColorMode;
   WebPrintQuality printQuality;
   WebPrintingSides sides;
+
+  AbortSignal signal;
 };
 
 dictionary WebPrinterAttributes {
-  DOMString printerName;
+  USVString printerName;
+  USVString printerId;
 
   unsigned long copiesDefault;
   WebPrintingRange copiesSupported;
 
   WebPrintingMediaCollection mediaColDefault;
   sequence<WebPrintingMediaCollection> mediaColDatabase;
+
+  USVString mediaSourceDefault;
+  sequence<USVString> mediaSourceSupported;
 
   WebPrintingMimeMediaType documentFormatDefault;
   sequence<WebPrintingMimeMediaType> documentFormatSupported;
@@ -75,7 +78,7 @@ dictionary WebPrinterAttributes {
   sequence<WebPrintColorMode> printColorModeSupported;
 
   WebPrinterState printerState;
-  DOMString printerStateMessage;
+  USVString printerStateMessage;
   sequence<WebPrinterStateReason> printerStateReasons;
 
   WebPrintQuality printQualityDefault;

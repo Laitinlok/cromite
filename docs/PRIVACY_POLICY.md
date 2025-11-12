@@ -16,7 +16,7 @@ Please note that all browsing data are recorded on disk and that access protecti
 Below is the list of features you can find in Cromite, compared to those exposed by default in chromium.
 
 #### OMNIBOX
-Cromite do not send any data to your default search engine by default, but you can enable suggestions query by ui. They can be turned on by checking "Autocomplete searches and URLs" of Cromite settings.
+Cromite do not send any data to your default search engine by default, but you can enable suggestions query by ui. They can be turned on by checking "Improve search suggestion" under ""Privacy and Security" of Cromite settings.
 
 Please note that autocomplete, when activated, is on also for incognito windows.
 
@@ -75,7 +75,10 @@ On desktop platforms it is possible to activate the automatic update of extensio
 
 In Android, the installation of PWAs is disabled and cannot be re-enabled.
 
-Cromite does not download or update any external components.
+Cromite does not download or update any google components.
+
+Cromite, by default, downloads from www.cromite.org a zip containing the fonts it uses for anti-fingerpriting protection. If the zip has already been downloaded, no connection is made again.
+In www.cromite.org, no log is active.
 
 #### NETWORK TIME
 Cromite never uses network time to verify SSL certificates, and no call is made to verify it.

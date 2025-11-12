@@ -3,6 +3,8 @@ Date: Mon, 13 Nov 2023 14:26:00 +0000
 Subject: Always allow inspect fallback
 
 Always enable 'inspect fallback' in 'chrome://inspect/#devices'
+
+License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
 ---
  chrome/browser/resources/inspect/inspect.js | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
@@ -10,7 +12,7 @@ Always enable 'inspect fallback' in 'chrome://inspect/#devices'
 diff --git a/chrome/browser/resources/inspect/inspect.js b/chrome/browser/resources/inspect/inspect.js
 --- a/chrome/browser/resources/inspect/inspect.js
 +++ b/chrome/browser/resources/inspect/inspect.js
-@@ -50,6 +50,7 @@ if ('browser-inspector' in queryParamsObject) {
+@@ -45,6 +45,7 @@ if ('browser-inspector' in queryParamsObject) {
  })();
  
  function isVersionNewerThanHost(version) {
@@ -18,7 +20,7 @@ diff --git a/chrome/browser/resources/inspect/inspect.js b/chrome/browser/resour
    if (!HOST_CHROME_VERSION) {
      return false;
    }
-@@ -561,7 +562,7 @@ function formatValue(data, property) {
+@@ -590,7 +591,7 @@ function formatValue(data, property) {
  function addFavicon(row, data) {
    const favicon = document.createElement('img');
    if (data['faviconUrl']) {

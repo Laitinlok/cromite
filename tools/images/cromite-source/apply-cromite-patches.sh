@@ -36,6 +36,26 @@ mv third_party/skia-bis third_party/skia
 git add -f third_party/skia >/dev/null
 git commit -m ":NOEXPORT: third_party/skia repo" >/dev/null
 
+echo -e ${RED} ------- remove third_party/perfetto subrepo ${NC}
+rm -rf third_party/perfetto/.git 
+cp -r third_party/perfetto third_party/perfetto-bis
+git rm -rf third_party/perfetto || true
+git submodule deinit -f third_party/perfetto || true
+rm -rf third_party/perfetto
+mv third_party/perfetto-bis third_party/perfetto
+git add -f third_party/perfetto >/dev/null
+git commit -m ":NOEXPORT: third_party/perfetto repo" >/dev/null
+
+echo -e ${RED} ------- remove third_party/boringssl subrepo ${NC}
+rm -rf third_party/boringssl/src/.git
+cp -r third_party/boringssl/src/ third_party/boringssl/src-bis
+git rm -rf third_party/boringssl/src || true
+git submodule deinit -f third_party/boringssl/src || true
+rm -rf third_party/boringssl/src
+mv third_party/boringssl/src-bis third_party/boringssl/src
+git add -f third_party/boringssl/src >/dev/null
+git commit -m ":NOEXPORT: third_party/boringssl repo" >/dev/null
+
 git prune
 
 echo -e ${RED} ------- patches ${NC}
